@@ -1,0 +1,18 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
+
+# Temporary
+*.tmp
+*.temp
+
+# Export files
+SOURCE_CODE_EXPORT.html
