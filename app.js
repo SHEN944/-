@@ -957,56 +957,56 @@ function pickFacilitiesByTier(tier) {
 
 function buildHotelCoverUrl(idx, tier, dest) {
   const keywords = [
-    `luxury,hotel,${dest}`,
-    `boutique,hotel,${dest},old, town`,
-    `resort,hotel,${dest},pool`,
+    'luxury-hotel',
+    'boutique-hotel-architecture',
+    'resort-hotel-pool',
   ];
   const k = keywords[idx % keywords.length];
-  return `https://loremflickr.com/800/450/${encodeURIComponent(k)}?lock=${idx}`;
+  return `https://source.unsplash.com/800x450/?${k},travel-hotel&sig=${idx}`;
 }
 function buildHotelImageUrl(roomStyle, hotelIdx, roomIdx, dest) {
   const map = {
-    bedroom:   `hotel,bedroom,queen,bed,warm`,
-    twin:      `hotel,twin,room,single,beds`,
-    deluxe:    `hotel,deluxe,king,bedroom,city,view`,
-    suite:     `hotel,executive,suite,living,room`,
-    family:    `hotel,family,room,kids,theme`,
-    penthouse: `hotel,penthouse,suite,panoramic,view`,
+    bedroom:   'hotel-bedroom',
+    twin:      'hotel-room-twin',
+    deluxe:    'hotel-deluxe-king',
+    suite:     'hotel-suite',
+    family:    'hotel-family-room',
+    penthouse: 'hotel-penthouse',
   };
   const k = map[roomStyle] || map.bedroom;
-  const seed = `${hotelIdx}-${roomIdx}`;
-  return `https://loremflickr.com/600/450/${encodeURIComponent(k)}?lock=${seed}`;
+  const seed = `${hotelIdx}${roomIdx}`;
+  return `https://source.unsplash.com/600x450/?${k},hotel-interior&sig=${seed}`;
 }
 
 function buildSpotImageUrl(spotName, dest, style) {
   const spot = String(spotName || dest + '景点');
   const has = (kw) => spot.includes(kw);
-  let kw = `travel,attraction,${dest}`;
+  let kw = 'travel-attraction,sightseeing';
   if (has('古城') || has('老城') || has('步行') || has('寺庙') || has('历史') || has('古村') || has('古村落') || has('老宅') || has('非遗') || has('民俗')) {
-    kw = `ancient,architecture,heritage,${dest}`;
+    kw = 'ancient-architecture,heritage-site';
   } else if (has('海边') || has('海滨') || has('沙滩') || has('湖畔') || has('河滨') || has('海景') || has('山水') || has('自然') || has('山景')) {
-    kw = `landscape,scenic,nature,${dest}`;
+    kw = 'landscape-photography,scenic-view';
   } else if (has('美食') || has('小吃') || has('火锅') || has('烧烤') || has('咖啡') || has('甜品') || has('茶馆') || has('早餐') || has('餐厅') || has('咖啡馆')) {
-    kw = `food,restaurant,cuisine,${dest}`;
+    kw = 'food-photography,restaurant';
   } else if (has('博物馆') || has('文化馆') || has('艺术') || has('展览')) {
-    kw = `museum,exhibition,culture,${dest}`;
+    kw = 'museum,exhibition-hall';
   } else if (has('公园') || has('花园')) {
-    kw = `city,park,green,${dest}`;
+    kw = 'city-park,green-space';
   } else if (has('地标') || has('广场') || has('建筑') || has('观景') || has('旋转') || has('摩天')) {
-    kw = `landmark,architecture,skyline,${dest}`;
+    kw = 'city-landmark,architecture,skyline';
   } else if (has('夜市') || has('夜景')) {
-    kw = `night,market,neon,${dest}`;
+    kw = 'night-market,neon-lights,cyberpunk';
   } else if (has('网红') || has('打卡')) {
-    kw = `instagrammable,trendy,${dest}`;
+    kw = 'instagrammable,trendy-place';
   } else if (has('亲子') || has('乐园') || has('游乐场')) {
-    kw = `amusement,park,family,${dest}`;
+    kw = 'amusement-park,family';
   } else if (has('市场') || has('集市') || has('购物')) {
-    kw = `market,shopping,${dest}`;
+    kw = 'local-market,shopping-street';
   } else if (has('摄影') || has('机位') || has('出片')) {
-    kw = `photo,viewpoint,scenic,${dest}`;
+    kw = 'photography-viewpoint,scenic-photo';
   }
   const hash = Array.from(spot).reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0, 0);
-  return `https://loremflickr.com/500/500/${encodeURIComponent(kw)}?lock=${Math.abs(hash)}`;
+  return `https://source.unsplash.com/500x500/?${kw},${dest}&sig=${Math.abs(hash)}`;
 }
 
 function pickSpotImageFromNews(spotName, dest, style, news) {
