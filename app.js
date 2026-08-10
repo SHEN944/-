@@ -668,7 +668,9 @@ async function buildGuideMock(dest, days, budget, style, news) {
   ];
   const activeSlots = slotDefs.filter((s) => slots[s.key]);
   const activeAttractionSlots = activeSlots.filter((s) => s.type === 'attraction');
-  const perDayAttrCount = Math.max(1, activeAttractionSlots.length);
+  // 每时段默认推荐 2 个必去景点（上午2 + 下午2 = 每天4个热门）
+  const ATTR_PER_SLOT = 2;
+  const perDayAttrCount = Math.max(1, activeAttractionSlots.length * ATTR_PER_SLOT);
   const scheduledCount = Math.min(days * perDayAttrCount, allAttractions.length);
   const scheduledAttractions = allAttractions.slice(0, scheduledCount);
   const poolAttractions = allAttractions.slice(scheduledCount);
@@ -680,7 +682,10 @@ async function buildGuideMock(dest, days, budget, style, news) {
         <div class="spot-meta">⏱ ${attr.duration} · #${attr.tag}${attr.address ? `<br />📍 ${escapeHtml(attr.address)}` : ''}</div>
         ${buildSpotMapLinks(attr.name, attr.address, dest)}
       </div>
-      <span class="spot-grip" title="拖拽替换">⠿</span>
+      <div class="spot-actions-col">
+        <button type="button" class="spot-del-btn" title="移除该景点（今天不想去的话就点我）" onclick="removeSpotFromSchedule(this)">✕</button>
+        <span class="spot-grip" title="拖拽替换 / 可拖回备选池">⠿</span>
+      </div>
     </div>
   `;
   const renderMealPlaceholder = (s) => `
@@ -697,15 +702,28 @@ async function buildGuideMock(dest, days, budget, style, news) {
     const slotRows = activeSlots.map((s) => {
       let bodyHtml = '';
       if (s.type === 'attraction') {
-        const attr = scheduledAttractions[i * perDayAttrCount + attrIdx] || scheduledAttractions[attrIdx] || allAttractions[0];
-        attrIdx++;
-        const img = pickSpotImageFromNews(attr.name, dest, style, news);
-        const cardHtml = renderAttractionCard(attr, s.key, i, img, dest);
+        // 每时段取 ATTR_PER_SLOT 个景点（按距离就近排序，模拟高德路线）
+        const slotAttrs = [];
+        for (let k = 0; k < ATTR_PER_SLOT; k++) {
+          const globalIdx = i * perDayAttrCount + attrIdx;
+          const attr = scheduledAttractions[globalIdx] || scheduledAttractions[attrIdx] || allAttractions[k % allAttractions.length];
+          slotAttrs.push(attr);
+          attrIdx++;
+        }
+        // 就近排序（基于高德距离估算）：从第一个景点开始，贪心式选下一个最近的
+        const sortedAttrs = sortSpotsByNearest(slotAttrs);
+        const cardsHtml = sortedAttrs.map((attr, cardIdx) => {
+          const img = pickSpotImageFromNews(attr.name, dest, safeStyle, news);
+          return renderAttractionCard(attr, s.key, i, img, dest).replace(
+            `data-spot-id="day${i+1}-${s.key}"`,
+            `data-spot-id="day${i+1}-${s.key}-${cardIdx}"`
+          );
+        }).join('');
         bodyHtml = `
             <div class="slot-cards" data-day-idx="${i}" data-slot-key="${s.key}">
-              ${cardHtml}
+              ${cardsHtml}
             </div>
-            <button class="add-spot-btn" type="button" data-day-idx="${i}" data-slot-key="${s.key}">＋ 添加景点到此时段</button>`;
+            <button class="add-spot-btn" type="button" data-day-idx="${i}" data-slot-key="${s.key}">＋ 添加景点到此时段（按高德距离自动排序）</button>`;
       } else if (s.type === 'meal') {
         bodyHtml = renderMealPlaceholder(s);
       }
@@ -758,7 +776,8 @@ async function buildGuideMock(dest, days, budget, style, news) {
       <p style="margin-bottom:12px;color:var(--text-soft);font-size:13px;line-height:1.9;">
         💡 <b>时间你自己定，不被推着走</b>：左侧「开始 → 结束」两个时间可以随意改（像手机闹钟一样点一下就弹滚轮），上午起不来就调晚点~<br />
         🔁 <strong>替换</strong>：把下方「备选景点池」的景点拖到上午/下午格子直接替换；已排景点也可拖回备选池。<br />
-        ➕ <strong>添加</strong>：点每个时段下方的「＋ 添加景点到此时段」按钮，从备选池选一个追加，<strong>时间会自动按景点数均分</strong>并在每个景点上显示建议时段。
+        ➕ <strong>添加</strong>：点每个时段下方的「＋ 添加景点到此时段」按钮，从备选池选追加，<b>系统会按高德距离自动把景点按就近顺序一个个排好</b>，并均分时间显示建议时段。<br />
+        ✕ <strong>删除</strong>：已推荐的景点不想去？点景点卡片右上角的 ✕ 按钮即可移除（也可拖回备选池）。某天不想出门的话，把该天景点全删掉就好～
       </p>
       ${daysArr.join('')}
     </div>
@@ -776,7 +795,9 @@ async function buildGuideMock(dest, days, budget, style, news) {
               <div class="spot-meta">⏱ ${a.duration} · #${a.tag}${a.address ? `<br />📍 ${escapeHtml(a.address)}` : ''}</div>
               ${buildSpotMapLinks(a.name, a.address, dest)}
             </div>
-            <span class="spot-grip" title="拖拽到上方行程替换">⠿</span>
+            <div class="spot-actions-col">
+              <span class="spot-grip" title="拖拽到上方行程替换">⠿</span>
+            </div>
           </div>
         `;}).join('')}
       </div>
@@ -906,6 +927,89 @@ function getAttractionsPool(dest, style) {
   }
   return base;
 }
+
+/* ========== 景点按高德距离就近排序（贪心式 TSP） ========== */
+function sortSpotsByNearest(spots, anchorSpot) {
+  if (!Array.isArray(spots) || spots.length <= 1) return spots.slice();
+  const rest = spots.slice();
+  const result = [];
+  // 选起点：优先anchorSpot；否则选市中心/老城区的（地址含「市中心 / 老城区 / 地铁1号线」）
+  let firstIdx = -1;
+  if (anchorSpot) firstIdx = rest.findIndex(s => s.name === anchorSpot.name);
+  if (firstIdx < 0) {
+    const centerKeys = ['市中心', '老城区', '地铁1号线', '古城南门', 'CBD核心', '人民大道', '地标'];
+    firstIdx = rest.findIndex(s => centerKeys.some(k => (s.address || '').includes(k) || (s.tag || '').includes(k)));
+  }
+  if (firstIdx < 0) firstIdx = 0;
+  let current = rest.splice(firstIdx, 1)[0];
+  result.push(current);
+  // 贪心：每一步选离当前最近的下一个
+  while (rest.length) {
+    let bestIdx = 0;
+    let bestDist = Infinity;
+    for (let i = 0; i < rest.length; i++) {
+      const d = estimateDistance(
+        { name: current.name, address: current.address },
+        { name: rest[i].name, address: rest[i].address }
+      );
+      if (d < bestDist) { bestDist = d; bestIdx = i; }
+    }
+    current = rest.splice(bestIdx, 1)[0];
+    result.push(current);
+  }
+  return result;
+}
+
+/* ========== 把已选景点卡片按距离重新就近排序（DOM 操作） ========== */
+function reorderSlotCardsByNearest(slotCardsEl) {
+  if (!slotCardsEl) return;
+  const cards = [...slotCardsEl.querySelectorAll(':scope > .spot-card')];
+  if (cards.length <= 1) return;
+  // 先移除现有路段交通提示
+  slotCardsEl.querySelectorAll(':scope > .transit-block:not(.transit-cross)').forEach(el => el.remove());
+  // 提取成 attr 对象数组排序，再对应地把 DOM 重新 append
+  const attrs = cards.map(card => ({
+    name: card.dataset.spotName,
+    address: card.dataset.spotAddress,
+    _el: card,
+  }));
+  const sorted = sortSpotsByNearest(attrs);
+  // 重新按顺序挂 DOM
+  sorted.forEach(a => slotCardsEl.appendChild(a._el));
+}
+
+/* ========== 删除景点（已排进日程的） ========== */
+function removeSpotFromSchedule(btnEl) {
+  try {
+    const card = btnEl.closest('.spot-card');
+    if (!card) return;
+    const slotCards = card.closest('.slot-cards');
+    const pool = document.getElementById('spotPool');
+    // 移除交通块 + 刷新
+    card.classList.add('swapped');
+    setTimeout(() => {
+      // 如果在备选池，直接删
+      if (card.classList.contains('pool-spot')) {
+        card.remove();
+        refreshNearBadges();
+        return;
+      }
+      card.remove();
+      // 如果 slotCards 已经空了，放个提示占位
+      if (slotCards && slotCards.querySelectorAll('.spot-card').length === 0) {
+        const emptyTip = document.createElement('p');
+        emptyTip.className = 'slot-empty-tip';
+        emptyTip.innerHTML = '😌 <b>这个时段暂不安排景点</b>，好好休息～<br/>想添加的话点下方「＋ 添加景点到此时段」按钮';
+        slotCards.appendChild(emptyTip);
+      }
+      refreshAllTransit();
+    }, 180);
+  } catch (e) {
+    console.warn('[删除景点] 出错：', e);
+  }
+}
+/* 暴露到 window 供 onclick 内联调用 */
+window.removeSpotFromSchedule = removeSpotFromSchedule;
 
 /* ========== 交通耗时估算 ========== */
 function estimateDistance(a, b) {
@@ -1543,7 +1647,7 @@ function swapSpotData(elA, elB) {
   refreshAllTransit();
 }
 
-/* ========== 添加景点到时段 ========== */
+/* ========== 添加景点到时段（多选 + 按高德距离自动就近排序） ========== */
 function bindAddSpotButtons() {
   document.querySelectorAll('.add-spot-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -1551,6 +1655,12 @@ function bindAddSpotButtons() {
       const slotKey = btn.dataset.slotKey;
       const next = btn.nextElementSibling;
       if (next && next.classList.contains('add-spot-panel')) {
+        // 如果点击时有已勾选的，直接全部加入并就近排序
+        const checked = [...next.querySelectorAll('.add-panel-check:checked')];
+        if (checked.length > 0) {
+          addMultiToSlotAndSort(dayIdx, slotKey, checked, next, btn);
+          return;
+        }
         next.remove();
         btn.classList.remove('active');
         return;
@@ -1566,42 +1676,121 @@ function bindAddSpotButtons() {
       }
       const panel = document.createElement('div');
       panel.className = 'add-spot-panel';
-      panel.innerHTML = '<p class="add-panel-tip">点击下方任一景点即追加到此时段，时间会自动按景点数均分：</p>' +
-        poolSpots.map((s) => `
-          <div class="add-panel-item" data-pool-id="${s.dataset.spotId}">
-            <span class="add-item-emoji">${s.dataset.spotEmoji || '📍'}</span>
-            <span class="add-item-name">${escapeHtml(s.dataset.spotName || '')}</span>
-            <span class="add-item-meta">${escapeHtml(s.dataset.spotDuration || '')} · ${escapeHtml(s.dataset.spotTag || '')}</span>
-          </div>
-        `).join('');
+      panel.innerHTML = `
+        <p class="add-panel-tip"><b>可多选</b>想加的景点，点下方「确认添加」后系统会按<b>高德距离自动就近一个个排好顺序</b>：</p>
+        <div class="add-panel-list">
+          ${poolSpots.map((s) => `
+            <label class="add-panel-item" data-pool-id="${s.dataset.spotId}">
+              <input type="checkbox" class="add-panel-check" />
+              <span class="add-item-emoji">${s.dataset.spotEmoji || '📍'}</span>
+              <span class="add-item-body">
+                <span class="add-item-name">${escapeHtml(s.dataset.spotName || '')}</span>
+                <span class="add-item-meta">${escapeHtml(s.dataset.spotDuration || '')} · ${escapeHtml(s.dataset.spotTag || '')}</span>
+              </span>
+            </label>
+          `).join('')}
+        </div>
+        <div class="add-panel-actions">
+          <button type="button" class="btn btn-sm btn-secondary add-panel-cancel">取消</button>
+          <button type="button" class="btn btn-sm btn-primary add-panel-confirm">确认添加（0 个已选）</button>
+        </div>`;
       btn.parentNode.insertBefore(panel, btn.nextSibling);
       btn.classList.add('active');
-      panel.querySelectorAll('.add-panel-item').forEach((item) => {
-        item.addEventListener('click', () => {
-          const poolSpot = pool.querySelector(`.pool-spot[data-spot-id="${item.dataset.poolId}"]`);
-          if (poolSpot) {
-            addToSlot(dayIdx, slotKey, poolSpot);
-            panel.remove();
-            btn.classList.remove('active');
-          }
-        });
+      // 多选数量联动
+      const confirmBtn = panel.querySelector('.add-panel-confirm');
+      const cancelBtn = panel.querySelector('.add-panel-cancel');
+      const checks = panel.querySelectorAll('.add-panel-check');
+      const updateCount = () => {
+        const n = [...checks].filter(c => c.checked).length;
+        confirmBtn.textContent = `确认添加（${n} 个已选）`;
+        confirmBtn.disabled = n === 0;
+      };
+      updateCount();
+      checks.forEach(c => c.addEventListener('change', updateCount));
+      cancelBtn.addEventListener('click', () => {
+        panel.remove();
+        btn.classList.remove('active');
+      });
+      confirmBtn.addEventListener('click', () => {
+        const checked = [...panel.querySelectorAll('.add-panel-check:checked')];
+        if (checked.length === 0) return;
+        addMultiToSlotAndSort(dayIdx, slotKey, checked, panel, btn);
       });
     });
   });
 }
 
+/* 多选后统一：添加 + 高德就近排序 + 时间/交通重算 */
+function addMultiToSlotAndSort(dayIdx, slotKey, checkedInputs, panel, btn) {
+  const pool = document.getElementById('spotPool');
+  if (!pool) return;
+  const slotRow = document.querySelector(`.slot-row[data-day-idx="${dayIdx}"][data-slot-key="${slotKey}"]`);
+  if (!slotRow) return;
+  const slotCards = slotRow.querySelector('.slot-cards');
+  if (!slotCards) return;
+  // 清理空提示
+  slotCards.querySelectorAll('.slot-empty-tip').forEach(el => el.remove());
+  checkedInputs.forEach((chk) => {
+    const item = chk.closest('.add-panel-item');
+    const poolId = item?.dataset?.poolId;
+    if (!poolId) return;
+    const poolSpot = pool.querySelector(`.pool-spot[data-spot-id="${poolId}"]`);
+    if (!poolSpot) return;
+    const newCard = poolSpot.cloneNode(true);
+    newCard.classList.remove('pool-spot');
+    newCard.dataset.spotId = `day${Number(dayIdx)+1}-${slotKey}-add${Date.now()}-${Math.floor(Math.random()*1e6)}`;
+    // 把备选池的 spot-actions-col 换成带删除按钮的版本（行程中才允许删除）
+    const oldCol = newCard.querySelector('.spot-actions-col');
+    if (oldCol) {
+      const newCol = document.createElement('div');
+      newCol.className = 'spot-actions-col';
+      newCol.innerHTML = `
+        <button type="button" class="spot-del-btn" title="移除该景点" onclick="removeSpotFromSchedule(this)">✕</button>
+        <span class="spot-grip" title="拖拽替换 / 可拖回备选池">⠿</span>`;
+      oldCol.replaceWith(newCol);
+    }
+    slotCards.appendChild(newCard);
+    poolSpot.remove();
+    bindSingleSpotDrag(newCard);
+    newCard.querySelectorAll('a, button, [role="button"]').forEach((el) => {
+      el.addEventListener('mousedown', (ev) => ev.stopPropagation());
+      el.addEventListener('dragstart', (ev) => ev.preventDefault());
+      el.style.cursor = 'pointer';
+    });
+    newCard.classList.add('swapped');
+    setTimeout(() => newCard.classList.remove('swapped'), 800);
+  });
+  // 关键：按高德距离就近重新排列（默认自动，用户手动替换时不触发）
+  reorderSlotCardsByNearest(slotCards);
+  refreshAllTransit();
+  panel?.remove();
+  btn?.classList.remove('active');
+}
+
+/* 单个 add 兼容保留（给其他调用路径使用） */
 function addToSlot(dayIdx, slotKey, poolSpotEl) {
   const slotRow = document.querySelector(`.slot-row[data-day-idx="${dayIdx}"][data-slot-key="${slotKey}"]`);
   if (!slotRow) return;
   const slotCards = slotRow.querySelector('.slot-cards');
   if (!slotCards) return;
+  slotCards.querySelectorAll('.slot-empty-tip').forEach(el => el.remove());
   const newCard = poolSpotEl.cloneNode(true);
   newCard.classList.remove('pool-spot');
   newCard.dataset.spotId = `day${Number(dayIdx)+1}-${slotKey}-add${Date.now()}`;
-  const grip = newCard.querySelector('.spot-grip');
-  if (grip) grip.title = '拖拽替换 / 拖回备选池';
+  // 行程中的景点：补齐删除按钮
+  const oldCol = newCard.querySelector('.spot-actions-col');
+  if (oldCol && !newCard.querySelector('.spot-del-btn')) {
+    const newCol = document.createElement('div');
+    newCol.className = 'spot-actions-col';
+    newCol.innerHTML = `
+      <button type="button" class="spot-del-btn" title="移除该景点" onclick="removeSpotFromSchedule(this)">✕</button>
+      <span class="spot-grip" title="拖拽替换 / 可拖回备选池">⠿</span>`;
+    oldCol.replaceWith(newCol);
+  }
   slotCards.appendChild(newCard);
   poolSpotEl.remove();
+  // 添加完也执行就近排序
+  reorderSlotCardsByNearest(slotCards);
   refreshAllTransit();
   bindSingleSpotDrag(newCard);
   newCard.querySelectorAll('a, button, [role="button"]').forEach((el) => {
@@ -1620,7 +1809,7 @@ function redistributeTimes(slotRowEl) {
   const slotCards = slotRowEl.querySelector('.slot-cards');
   if (!startInput || !endInput || !slotCards) return;
   slotCards.querySelectorAll('.transit-block:not(.transit-cross)').forEach((el) => el.remove());
-  const cards = [...slotCards.querySelectorAll('.spot-card')];
+  const cards = [...slotCards.querySelectorAll(':scope > .spot-card')];
   if (!cards.length) return;
   const [sh, sm] = startInput.value.split(':').map(Number);
   const [eh, em] = endInput.value.split(':').map(Number);

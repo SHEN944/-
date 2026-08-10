@@ -879,19 +879,110 @@ html, body {
   color: var(--primary-dark);
   background: var(--primary-light);
 }
+/* 景点卡片右上角操作栏：删除按钮 + 拖拽手柄 */
+.spot-actions-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  padding-top: 2px;
+}
+.spot-del-btn {
+  width: 22px; height: 22px;
+  border: none;
+  background: #fff;
+  border: 1.5px solid var(--card-border);
+  color: var(--text-mute);
+  border-radius: 50%;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+  font-weight: 700;
+}
+.spot-del-btn:hover {
+  background: #ffe6e0;
+  border-color: #e55;
+  color: #c22;
+  transform: scale(1.08);
+}
 .spot-grip {
   width: 24px;
-  align-self: center;
   text-align: center;
   font-size: 18px;
   color: var(--text-mute);
   cursor: grab;
-  padding: 20px 0;
+  padding: 6px 0;
   line-height: 1;
 }
 .spot-grip:active { cursor: grabbing; }
 
-/* ===== 添加景点 ===== */
+/* 当所有景点清空时的占位提示 */
+.slot-empty-tip {
+  padding: 18px 12px;
+  text-align: center;
+  background: #fffbe8;
+  border: 1.5px dashed var(--accent);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--secondary);
+  line-height: 1.8;
+}
+
+/* ===== 添加景点多选面板 ===== */
+.btn-sm {
+  padding: 6px 14px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+.add-panel-list {
+  max-height: 340px;
+  overflow-y: auto;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 4px;
+  margin-bottom: 10px;
+}
+.add-panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.add-panel-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.add-panel-list .add-panel-item { margin-bottom: 2px; }
+.add-panel-list .add-panel-item:last-child { margin-bottom: 0; }
+.add-panel-item:hover { background: var(--primary-light); }
+.add-panel-check {
+  width: 16px; height: 16px;
+  accent-color: var(--primary);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.add-item-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.add-item-emoji { font-size: 16px; }
+.add-item-name { font-weight: 600; font-size: 13px; color: var(--text); }
+.add-item-meta { font-size: 11px; color: var(--text-mute); }
+
+/* ===== 添加景点按钮 ===== */
+.add-spot-panel {
+  /* 兼容（多选版面板已包含在上面的 add-panel-list 中） */
+}
 .add-spot-btn {
   display: block;
   width: 100%;
