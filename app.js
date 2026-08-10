@@ -950,56 +950,57 @@ function pickFacilitiesByTier(tier) {
 }
 
 function buildHotelCoverUrl(idx, tier, dest) {
-  const prompts = [
-    `Luxury hotel exterior in ${dest}, modern architecture, warm lighting, travel photography`,
-    `Boutique hotel in ${dest} old town, traditional architecture with cozy courtyard`,
-    `Resort hotel with pool and ocean/mountain view in ${dest}, sunset, premium travel`,
+  const keywords = [
+    `luxury,hotel,${dest}`,
+    `boutique,hotel,${dest},old, town`,
+    `resort,hotel,${dest},pool`,
   ];
-  const p = prompts[idx % prompts.length];
-  return `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=${encodeURIComponent('Hotel exterior photo: ' + p)}&image_size=landscape_16_9`;
+  const k = keywords[idx % keywords.length];
+  return `https://loremflickr.com/800/450/${encodeURIComponent(k)}?lock=${idx}`;
 }
 function buildHotelImageUrl(roomStyle, hotelIdx, roomIdx, dest) {
   const map = {
-    bedroom:   `Clean standard hotel bedroom with 1.8m queen bed in ${dest}, warm lights, wooden floor, travel hotel interior photo`,
-    twin:      `Hotel twin room with two single beds in ${dest}, bright window, simple modern interior, real photo`,
-    deluxe:    `Deluxe hotel king bedroom with city view through large window in ${dest}, elegant warm interior, photography`,
-    suite:     `Luxury hotel executive suite with separate living room in ${dest}, sofa, coffee machine, premium interior`,
-    family:    `Family friendly hotel room with kids theme decor in ${dest}, tent, toys, warm light, photo`,
-    penthouse: `Luxury penthouse suite with 360 panoramic skyline view of ${dest}, floor-to-ceiling windows, jacuzzi, ultra premium`,
+    bedroom:   `hotel,bedroom,queen,bed,warm`,
+    twin:      `hotel,twin,room,single,beds`,
+    deluxe:    `hotel,deluxe,king,bedroom,city,view`,
+    suite:     `hotel,executive,suite,living,room`,
+    family:    `hotel,family,room,kids,theme`,
+    penthouse: `hotel,penthouse,suite,panoramic,view`,
   };
-  const p = map[roomStyle] || map.bedroom;
-  return `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=${encodeURIComponent('Hotel room interior real photo: ' + p)}&image_size=landscape_4_3`;
+  const k = map[roomStyle] || map.bedroom;
+  const seed = `${hotelIdx}-${roomIdx}`;
+  return `https://loremflickr.com/600/450/${encodeURIComponent(k)}?lock=${seed}`;
 }
 
 function buildSpotImageUrl(spotName, dest, style) {
   const spot = String(spotName || dest + '景点');
   const has = (kw) => spot.includes(kw);
-  let styleKw = 'realistic travel photography, daylight, high detail';
+  let kw = `travel,attraction,${dest}`;
   if (has('古城') || has('老城') || has('步行') || has('寺庙') || has('历史') || has('古村') || has('古村落') || has('老宅') || has('非遗') || has('民俗')) {
-    styleKw = 'traditional architecture, cultural heritage, warm golden hour, real travel photo, high detail';
+    kw = `ancient,architecture,heritage,${dest}`;
   } else if (has('海边') || has('海滨') || has('沙滩') || has('湖畔') || has('河滨') || has('海景') || has('山水') || has('自然') || has('山景')) {
-    styleKw = 'stunning natural landscape, scenic view, vivid colors, travel photography';
+    kw = `landscape,scenic,nature,${dest}`;
   } else if (has('美食') || has('小吃') || has('火锅') || has('烧烤') || has('咖啡') || has('甜品') || has('茶馆') || has('早餐') || has('餐厅') || has('咖啡馆')) {
-    styleKw = 'foodie street scene, local cuisine stalls, cozy atmosphere, travel vlog style photo, restaurant interior';
+    kw = `food,restaurant,cuisine,${dest}`;
   } else if (has('博物馆') || has('文化馆') || has('艺术') || has('展览')) {
-    styleKw = 'museum interior, elegant exhibition space, cultural travel photo';
+    kw = `museum,exhibition,culture,${dest}`;
   } else if (has('公园') || has('花园')) {
-    styleKw = 'city park with green trees and walking path, sunny day, travel photo';
+    kw = `city,park,green,${dest}`;
   } else if (has('地标') || has('广场') || has('建筑') || has('观景') || has('旋转') || has('摩天')) {
-    styleKw = 'iconic city landmark architecture, urban skyline, cinematic travel photography';
+    kw = `landmark,architecture,skyline,${dest}`;
   } else if (has('夜市') || has('夜景')) {
-    styleKw = 'night city scene with bright neon lights, busy night market, atmospheric travel photo';
+    kw = `night,market,neon,${dest}`;
   } else if (has('网红') || has('打卡')) {
-    styleKw = 'popular instagrammable spot, trendy aesthetic, bright vivid travel photo';
+    kw = `instagrammable,trendy,${dest}`;
   } else if (has('亲子') || has('乐园') || has('游乐场')) {
-    styleKw = 'family amusement park, colorful theme park, happy travel photo';
+    kw = `amusement,park,family,${dest}`;
   } else if (has('市场') || has('集市') || has('购物')) {
-    styleKw = 'busy local market street, vibrant atmosphere, real travel photo';
+    kw = `market,shopping,${dest}`;
   } else if (has('摄影') || has('机位') || has('出片')) {
-    styleKw = 'scenic photo viewpoint, best composition for photography, travel guide photo';
+    kw = `photo,viewpoint,scenic,${dest}`;
   }
-  const prompt = `${spot} in ${dest}, ${styleKw}, ${style} travel destination`;
-  return `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=${encodeURIComponent('Travel spot photo: ' + prompt)}&image_size=square`;
+  const hash = Array.from(spot).reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0, 0);
+  return `https://loremflickr.com/500/500/${encodeURIComponent(kw)}?lock=${Math.abs(hash)}`;
 }
 
 function pickSpotImageFromNews(spotName, dest, style, news) {
