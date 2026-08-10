@@ -632,13 +632,13 @@ async function generateGuide(dest, days, budget, style, news) {
       }
     } catch (err) { console.warn('[LLM API] 调用失败：', err); }
   }
-  const html = buildGuideMock(dest, days, budget, style, news);
+  const html = await buildGuideMock(dest, days, budget, style, news);
   GUIDE_CACHE.set(key, html);
   if (GUIDE_CACHE.size > 30) GUIDE_CACHE.delete(GUIDE_CACHE.keys().next().value);
   return html;
 }
 
-function buildGuideMock(dest, days, budget, style, news) {
+async function buildGuideMock(dest, days, budget, style, news) {
   const budgetText = budget ? `每晚¥${budget}` : '不限预算';
   const dyNews = news.filter((n) => n.source === 'douyin').slice(0, 3);
   const xhsNews = news.filter((n) => n.source === 'xhs').slice(0, 3);
@@ -731,7 +731,7 @@ function buildGuideMock(dest, days, budget, style, news) {
       </div>
     `);
   }
-  const hotelRecs = getHotelRecommendations(dest, budget);
+  const hotelRecs = await getHotelRecommendations(dest, budget);
   const packingList = [
     '证件：身份证/护照、学生证、驾照（如需租车）',
     '衣物：${season}服饰、舒适徒步鞋、换洗衣物',
