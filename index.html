@@ -111,6 +111,7 @@
 
       <div class="actions">
         <button id="generateBtn" class="btn btn-primary">生成我的旅行攻略 ✈️</button>
+        <button id="configBtn" class="btn btn-secondary">⚙️ 搜索源设置</button>
       </div>
     </main>
 
@@ -134,6 +135,62 @@
     <div class="loading-box">
       <div class="spinner"></div>
       <p id="loadingText">正在从抖音 &amp; 小红书搜集最新资讯...</p>
+    </div>
+  </div>
+
+  <!-- 配置面板模态框 -->
+  <div id="configModal" class="config-modal hidden">
+    <div class="config-box">
+      <h3>⚙️ 搜索源配置</h3>
+      <p class="config-desc">配置你的后端代理地址（用于绕过跨域限制）</p>
+      
+      <div class="config-section">
+        <h4>📍 景点搜索源（抖音 + 小红书）</h4>
+        <div class="config-field">
+          <label>抖音搜索代理</label>
+          <input id="cfgDouyin" type="text" placeholder="/api/douyin/search" />
+        </div>
+        <div class="config-field">
+          <label>小红书搜索代理</label>
+          <input id="cfgXhs" type="text" placeholder="/api/xhs/search" />
+        </div>
+      </div>
+      
+      <div class="config-section">
+        <h4>🏨 酒店搜索源（抖音 + 小红书 + 携程）</h4>
+        <div class="config-field">
+          <label>抖音酒店代理</label>
+          <input id="cfgDouyinHotel" type="text" placeholder="/api/douyin/hotel/search" />
+        </div>
+        <div class="config-field">
+          <label>小红书酒店代理</label>
+          <input id="cfgXhsHotel" type="text" placeholder="/api/xhs/hotel/search" />
+        </div>
+        <div class="config-field">
+          <label>携程酒店代理</label>
+          <input id="cfgCtripHotel" type="text" placeholder="/api/ctrip/hotel/search" />
+        </div>
+      </div>
+      
+      <div class="config-section">
+        <h4>🤖 AI 生成接口</h4>
+        <div class="config-field">
+          <label>LLM 代理</label>
+          <input id="cfgLlm" type="text" placeholder="/api/llm/generate" />
+        </div>
+      </div>
+      
+      <div class="config-options">
+        <label class="config-switch-row">
+          <input id="cfgUseMock" type="checkbox" checked />
+          <span>无 API 时使用智能模拟数据</span>
+        </label>
+      </div>
+      
+      <div class="config-actions">
+        <button id="configSave" class="btn btn-primary">保存配置</button>
+        <button id="configClose" class="btn btn-secondary">取消</button>
+      </div>
     </div>
   </div>
 

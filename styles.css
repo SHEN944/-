@@ -1277,6 +1277,106 @@ html, body {
   font-weight: 500;
 }
 
+/* ===== 配置面板 ===== */
+.config-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(60, 49, 39, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease;
+}
+.config-box {
+  background: #fff;
+  padding: 28px;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  width: 90%;
+  max-width: 520px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.config-box h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 8px 0;
+}
+.config-desc {
+  font-size: 13px;
+  color: var(--text-mute);
+  margin: 0 0 20px 0;
+  line-height: 1.6;
+}
+.config-section {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--bg-soft);
+  border-radius: 12px;
+}
+.config-section h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 12px 0;
+}
+.config-field {
+  margin-bottom: 12px;
+}
+.config-field:last-child {
+  margin-bottom: 0;
+}
+.config-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-soft);
+  margin-bottom: 4px;
+}
+.config-field input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1.5px solid var(--card-border);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text);
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+.config-field input:focus {
+  border-color: var(--primary);
+}
+.config-options {
+  margin-bottom: 20px;
+}
+.config-switch-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-soft);
+  cursor: pointer;
+}
+.config-switch-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+.config-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+.config-actions .btn {
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
 /* ===== Footer ===== */
 .footer {
   text-align: center;

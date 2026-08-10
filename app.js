@@ -13,10 +13,19 @@
  * 注意：由于浏览器跨域限制，API 调用需通过自己的后端代理。
  */
 const API_CONFIG = {
-  douyinProxy: '',    // e.g. '/api/douyin/search'
-  xhsProxy: '',       // e.g. '/api/xhs/search'
-  llmProxy: '',       // e.g. '/api/llm/generate'  （AI 生成接口）
-  useMockWhenNoApi: true,  // 无 API 时使用智能模拟数据
+  // 景点搜索（固定：抖音 + 小红书）
+  douyinProxy: '',          // 抖音景点搜索代理，e.g. '/api/douyin/search'
+  xhsProxy: '',             // 小红书景点搜索代理，e.g. '/api/xhs/search'
+  
+  // 酒店搜索（固定：抖音 + 小红书 + 携程）
+  douyinHotelProxy: '',     // 抖音酒店搜索代理，e.g. '/api/douyin/hotel/search'
+  xhsHotelProxy: '',        // 小红书酒店搜索代理，e.g. '/api/xhs/hotel/search'
+  ctripHotelProxy: '',      // 携程酒店搜索代理，e.g. '/api/ctrip/hotel/search'
+  
+  // AI 生成接口
+  llmProxy: '',             // e.g. '/api/llm/generate'
+  
+  useMockWhenNoApi: true,   // 无 API 时使用智能模拟数据
 };
 
 /* ========== 日期工具 ========== */
@@ -114,6 +123,7 @@ function init() {
   if (els.endDate)   { els.endDate.min = t;   els.endDate.value = state.endDate; }
   computeDays();
   if (els.daysValue) els.daysValue.textContent = state.days;
+  loadConfig();  // 加载本地保存的配置
   bindEvents();
   validateForm();
 }
@@ -173,6 +183,82 @@ function bindEvents() {
     state.enableSearch = e.target.checked;
   });
   els.generateBtn.addEventListener('click', handleGenerateGuide);
+  
+  // 配置面板按钮
+  const configBtn = document.getElementById('configBtn');
+  const configModal = document.getElementById('configModal');
+  const configSave = document.getElementById('configSave');
+  const configClose = document.getElementById('configClose');
+  
+  if (configBtn && configModal) {
+    configBtn.addEventListener('click', () => {
+      fillConfigForm();
+      configModal.classList.remove('hidden');
+    });
+  }
+  if (configClose && configModal) {
+    configClose.addEventListener('click', () => {
+      configModal.classList.add('hidden');
+    });
+  }
+  if (configSave) {
+    configSave.addEventListener('click', () => {
+      saveConfigFromForm();
+      configModal.classList.add('hidden');
+    });
+  }
+  // 点击模态框背景关闭
+  if (configModal) {
+    configModal.addEventListener('click', (e) => {
+      if (e.target === configModal) {
+        configModal.classList.add('hidden');
+      }
+    });
+  }
+}
+
+/* ========== 配置持久化 ========== */
+function loadConfig() {
+  try {
+    const saved = localStorage.getItem('travelApiConfig');
+    if (saved) {
+      const cfg = JSON.parse(saved);
+      Object.assign(API_CONFIG, cfg);
+    }
+  } catch (e) { console.warn('[配置] 加载失败：', e); }
+}
+
+function saveConfigFromForm() {
+  const cfg = {
+    douyinProxy: document.getElementById('cfgDouyin')?.value.trim() || '',
+    xhsProxy: document.getElementById('cfgXhs')?.value.trim() || '',
+    douyinHotelProxy: document.getElementById('cfgDouyinHotel')?.value.trim() || '',
+    xhsHotelProxy: document.getElementById('cfgXhsHotel')?.value.trim() || '',
+    ctripHotelProxy: document.getElementById('cfgCtripHotel')?.value.trim() || '',
+    llmProxy: document.getElementById('cfgLlm')?.value.trim() || '',
+    useMockWhenNoApi: document.getElementById('cfgUseMock')?.checked ?? true,
+  };
+  Object.assign(API_CONFIG, cfg);
+  try {
+    localStorage.setItem('travelApiConfig', JSON.stringify(cfg));
+  } catch (e) { console.warn('[配置] 保存失败：', e); }
+}
+
+function fillConfigForm() {
+  const fields = [
+    ['cfgDouyin', API_CONFIG.douyinProxy],
+    ['cfgXhs', API_CONFIG.xhsProxy],
+    ['cfgDouyinHotel', API_CONFIG.douyinHotelProxy],
+    ['cfgXhsHotel', API_CONFIG.xhsHotelProxy],
+    ['cfgCtripHotel', API_CONFIG.ctripHotelProxy],
+    ['cfgLlm', API_CONFIG.llmProxy],
+  ];
+  fields.forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val || '';
+  });
+  const mock = document.getElementById('cfgUseMock');
+  if (mock) mock.checked = API_CONFIG.useMockWhenNoApi;
 }
 
 function validateForm() {
@@ -845,8 +931,129 @@ function getFoodPool(dest) {
   ];
 }
 
-function getHotelRecommendations(dest, budget) {
-  return getHotelPreset(dest, budget);
+async function getHotelRecommendations(dest, budget) {
+  const checkIn = state.startDate || '';
+  const checkOut = state.endDate || '';
+  
+  // 尝试从 API 搜索酒店（抖音 + 小红书 + 携程）
+  if (API_CONFIG.douyinHotelProxy || API_CONFIG.xhsHotelProxy || API_CONFIG.ctripHotelProxy) {
+    const apiHotels = await fetchHotelFromApis(dest, budget, checkIn, checkOut);
+    if (apiHotels && apiHotels.length >= 3) {
+      return apiHotels;
+    }
+  }
+  
+  // 无 API 或数据不足时使用预设数据
+  if (API_CONFIG.useMockWhenNoApi) {
+    return getHotelPreset(dest, budget);
+  }
+  return [];
+}
+
+async function fetchHotelFromApis(dest, budget, checkIn, checkOut) {
+  const results = [];
+  const params = `?q=${encodeURIComponent(dest)}&budget=${budget || ''}&checkIn=${checkIn}&checkOut=${checkOut}`;
+  
+  // 1. 抖音酒店搜索
+  if (API_CONFIG.douyinHotelProxy) {
+    try {
+      const res = await fetch(`${API_CONFIG.douyinHotelProxy}${params}`).then((r) => r.json());
+      if (res && res.data) res.data.forEach((item) => results.push(normalizeDouyinHotel(item)));
+    } catch (err) { console.warn('[抖音酒店API] 调用失败：', err); }
+  }
+  
+  // 2. 小红书酒店搜索
+  if (API_CONFIG.xhsHotelProxy) {
+    try {
+      const res = await fetch(`${API_CONFIG.xhsHotelProxy}${params}`).then((r) => r.json());
+      if (res && res.data) res.data.forEach((item) => results.push(normalizeXhsHotel(item)));
+    } catch (err) { console.warn('[小红书酒店API] 调用失败：', err); }
+  }
+  
+  // 3. 携程酒店搜索
+  if (API_CONFIG.ctripHotelProxy) {
+    try {
+      const res = await fetch(`${API_CONFIG.ctripHotelProxy}${params}`).then((r) => r.json());
+      if (res && res.data) res.data.forEach((item) => results.push(normalizeCtripHotel(item)));
+    } catch (err) { console.warn('[携程酒店API] 调用失败：', err); }
+  }
+  
+  return results;
+}
+
+function normalizeDouyinHotel(item) {
+  return {
+    name: item.hotel_name || item.name || '抖音热门酒店',
+    area: item.location || item.address || '',
+    tags: item.tags || ['抖音热门', '网红酒店'],
+    rating: item.rating || 4.5,
+    reviews: item.review_count || item.comments || rand(200, 5000),
+    cover: item.cover || item.video_cover || buildHotelCoverUrl(0, 'mid'),
+    desc: item.desc || item.description || '抖音用户热门推荐',
+    facilities: item.facilities || ['免费WiFi', '空调', '独立卫浴'],
+    rooms: (item.rooms || []).map((r, i) => ({
+      type: r.type || '标准大床房',
+      bed: r.bed || '1.8m 大床',
+      size: r.size || '30㎡',
+      view: r.view || '城市景观',
+      image: r.image || 'bedroom',
+      amenities: r.amenities || ['免费WiFi', '空调'],
+      price: r.price || 300,
+      oldPrice: r.oldPrice || (r.price || 300) + 100,
+      breakfast: r.breakfast || '早餐可加购',
+      cancel: r.cancel || '免费取消',
+    })).slice(0, 3),
+  };
+}
+
+function normalizeXhsHotel(item) {
+  return {
+    name: item.hotel_name || item.name || '小红书种草酒店',
+    area: item.location || item.address || '',
+    tags: item.tags || ['小红书种草', 'ins风'],
+    rating: item.rating || 4.6,
+    reviews: item.review_count || item.likes || rand(100, 3000),
+    cover: item.cover || item.note_cover || buildHotelCoverUrl(1, 'mid'),
+    desc: item.desc || item.content || '小红书博主推荐',
+    facilities: item.facilities || ['免费WiFi', '空调', '设计感'],
+    rooms: (item.rooms || []).map((r, i) => ({
+      type: r.type || '豪华大床房',
+      bed: r.bed || '2.0m 大床',
+      size: r.size || '35㎡',
+      view: r.view || '园景',
+      image: r.image || 'deluxe',
+      amenities: r.amenities || ['免费WiFi', '浴缸'],
+      price: r.price || 400,
+      oldPrice: r.oldPrice || (r.price || 400) + 150,
+      breakfast: r.breakfast || '含早餐',
+      cancel: r.cancel || '免费取消',
+    })).slice(0, 3),
+  };
+}
+
+function normalizeCtripHotel(item) {
+  return {
+    name: item.hotelName || item.name || '携程优选酒店',
+    area: item.area || item.address || item.city || '',
+    tags: item.tags || item.filters || ['携程优选', '星级酒店'],
+    rating: item.rating || item.score || 4.7,
+    reviews: item.commentCount || item.review_count || rand(500, 10000),
+    cover: item.cover || item.img || buildHotelCoverUrl(2, 'mid'),
+    desc: item.description || item.desc || '携程品质保障',
+    facilities: item.facilities || item.equipments || ['免费WiFi', '空调', '健身房'],
+    rooms: (item.rooms || item.room_list || []).map((r, i) => ({
+      type: r.roomName || r.type || '标准房',
+      bed: r.bedType || '1.8m 大床',
+      size: r.area || '30㎡',
+      view: r.view || '城市景观',
+      image: r.type_image || 'bedroom',
+      amenities: r.amenities || ['免费WiFi', '空调'],
+      price: r.price || r.sell_price || 350,
+      oldPrice: r.original_price || r.market_price || (r.price || 350) + 120,
+      breakfast: r.breakfast || '含双早',
+      cancel: r.cancel || '免费取消',
+    })).slice(0, 3),
+  };
 }
 
 function getHotelPreset(dest, budget) {
@@ -952,13 +1159,17 @@ function pickFacilitiesByTier(tier) {
 }
 
 function buildHotelCoverUrl(idx, tier, dest) {
+  // 兼容不同的调用方式
+  const realIdx = typeof idx === 'number' ? idx : 0;
   const keywords = [
     'luxury,hotel,architecture',
     'boutique,hotel,old,building',
     'resort,hotel,pool,sunset',
+    'hotel,room,interior,lobby',
+    'hotel,bedroom,suite,luxury',
   ];
-  const k = keywords[idx % keywords.length];
-  return `https://loremflickr.com/800/450/${k}?lock=h${idx}`;
+  const k = keywords[realIdx % keywords.length];
+  return `https://loremflickr.com/800/450/${k}?lock=h${realIdx}`;
 }
 function buildHotelImageUrl(roomStyle, hotelIdx, roomIdx, dest) {
   const map = {
