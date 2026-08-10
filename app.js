@@ -587,7 +587,7 @@ function buildGuideMock(dest, days, budget, style, news) {
   const poolAttractions = allAttractions.slice(scheduledCount);
   const renderAttractionCard = (attr, slotKey, dayIdx, img, dest) => `
     <div class="spot-card draggable-spot" draggable="true" data-spot-id="day${dayIdx+1}-${slotKey}" data-spot-name="${escapeHtml(attr.name)}" data-spot-emoji="${attr.emoji}" data-spot-duration="${attr.duration}" data-spot-tag="${attr.tag}" data-spot-address="${escapeHtml(attr.address || '')}" data-spot-imageurl="${escapeHtml(img)}">
-      <div class="spot-photo"><img src="${img}" alt="${escapeHtml(attr.name)} 实景图" loading="lazy" /><span class="spot-photo-emoji">${attr.emoji}</span></div>
+      <div class="spot-photo"><img src="${img}" alt="${escapeHtml(attr.name)} 实景图" loading="lazy" onerror="this.onerror=null;this.src='https://loremflickr.com/500/500/travel,landmark,city?lock='+Math.floor(Math.random()*9999)"/><span class="spot-photo-emoji">${attr.emoji}</span></div>
       <div class="spot-info">
         <div class="spot-name">${escapeHtml(attr.name)}</div>
         <div class="spot-meta">⏱ ${attr.duration} · #${attr.tag}${attr.address ? `<br />📍 ${escapeHtml(attr.address)}` : ''}</div>
@@ -682,7 +682,7 @@ function buildGuideMock(dest, days, budget, style, news) {
           const img = pickSpotImageFromNews(a.name, dest, style, news);
           return `
           <div class="spot-card pool-spot draggable-spot" draggable="true" data-spot-id="pool-${i}" data-spot-name="${escapeHtml(a.name)}" data-spot-emoji="${a.emoji}" data-spot-duration="${a.duration}" data-spot-tag="${a.tag}" data-spot-address="${escapeHtml(a.address || '')}" data-spot-imageurl="${escapeHtml(img)}">
-            <div class="spot-photo"><img src="${img}" alt="${escapeHtml(a.name)} 照片" loading="lazy" /><span class="spot-photo-emoji">${a.emoji}</span></div>
+            <div class="spot-photo"><img src="${img}" alt="${escapeHtml(a.name)} 照片" loading="lazy" onerror="this.onerror=null;this.src='https://loremflickr.com/500/500/travel,landmark,city?lock='+Math.floor(Math.random()*9999)"/><span class="spot-photo-emoji">${a.emoji}</span></div>
             <div class="spot-info">
               <div class="spot-name">${escapeHtml(a.name)}</div>
               <div class="spot-meta">⏱ ${a.duration} · #${a.tag}${a.address ? `<br />📍 ${escapeHtml(a.address)}` : ''}</div>
@@ -979,30 +979,30 @@ function buildSpotImageUrl(spotName, dest, style) {
   const has = (kw) => spot.includes(kw);
   let kw = 'travel,attraction,sightseeing';
   if (has('古城') || has('老城') || has('步行') || has('寺庙') || has('历史') || has('古村') || has('古村落') || has('老宅') || has('非遗') || has('民俗')) {
-    kw = 'ancient,architecture,heritage';
+    kw = 'ancient,architecture,heritage,china';
   } else if (has('海边') || has('海滨') || has('沙滩') || has('湖畔') || has('河滨') || has('海景') || has('山水') || has('自然') || has('山景')) {
-    kw = 'landscape,scenic,nature';
+    kw = 'landscape,scenic,nature,mountain';
   } else if (has('美食') || has('小吃') || has('火锅') || has('烧烤') || has('咖啡') || has('甜品') || has('茶馆') || has('早餐') || has('餐厅') || has('咖啡馆')) {
-    kw = 'food,restaurant,cuisine';
+    kw = 'food,restaurant,cuisine,chinese';
   } else if (has('博物馆') || has('文化馆') || has('艺术') || has('展览')) {
-    kw = 'museum,art,exhibition';
+    kw = 'museum,art,exhibition,gallery';
   } else if (has('公园') || has('花园')) {
-    kw = 'park,green,garden';
+    kw = 'park,green,garden,outdoor';
   } else if (has('地标') || has('广场') || has('建筑') || has('观景') || has('旋转') || has('摩天')) {
-    kw = 'landmark,architecture,skyline';
+    kw = 'landmark,architecture,skyline,city';
   } else if (has('夜市') || has('夜景')) {
-    kw = 'night,market,neon';
+    kw = 'night,market,neon,street';
   } else if (has('网红') || has('打卡')) {
-    kw = 'instagram,trendy,place';
+    kw = 'instagram,trendy,place,photo';
   } else if (has('亲子') || has('乐园') || has('游乐场')) {
-    kw = 'amusement,park,family';
+    kw = 'amusement,park,family,fun';
   } else if (has('市场') || has('集市') || has('购物')) {
-    kw = 'market,shopping,street';
+    kw = 'market,shopping,street,vendor';
   } else if (has('摄影') || has('机位') || has('出片')) {
-    kw = 'photography,viewpoint,scenic';
+    kw = 'photography,viewpoint,scenic,landscape';
   }
   const hash = Array.from(spot).reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0, 0);
-  return `https://loremflickr.com/500/500/${kw},${dest}?lock=s${Math.abs(hash) % 9999}`;
+  return `https://loremflickr.com/500/500/${kw}?lock=s${Math.abs(hash) % 9999}`;
 }
 
 function pickSpotImageFromNews(spotName, dest, style, news) {
@@ -1077,7 +1077,7 @@ function renderHotelCards(hotels, dest) {
   return hotels.map((h) => `
     <div class="hotel-card">
       <div class="hotel-cover">
-        <img src="${h.cover}" alt="${escapeHtml(h.name)} 封面" loading="lazy" />
+        <img src="${h.cover}" alt="${escapeHtml(h.name)} 封面" loading="lazy" onerror="this.onerror=null;this.src='https://loremflickr.com/800/450/luxury,hotel,resort?lock='+Math.floor(Math.random()*9999)"/>
       </div>
       <div class="hotel-head">
         <div class="hotel-title-row">
@@ -1114,7 +1114,7 @@ function renderRoomCard(r) {
   return `
     <div class="room-card">
       <div class="room-photo">
-        <img src="${r.image}" alt="${escapeHtml(r.type)} 房间图" loading="lazy" />
+        <img src="${r.image}" alt="${escapeHtml(r.type)} 房间图" loading="lazy" onerror="this.onerror=null;this.src='https://loremflickr.com/600/450/hotel,bedroom,interior?lock='+Math.floor(Math.random()*9999)"/>
       </div>
       <div class="room-body">
         <div class="room-head">
