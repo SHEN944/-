@@ -98,7 +98,6 @@ const els = {
   styles: $('styles'),
   slots: $('slots'),
   enableSearch: $('enableSearch'),
-  searchBtn: $('searchBtn'),
   generateBtn: $('generateBtn'),
   searchResults: $('searchResults'),
   searchList: $('searchList'),
@@ -172,16 +171,13 @@ function bindEvents() {
   }
   els.enableSearch.addEventListener('change', (e) => {
     state.enableSearch = e.target.checked;
-    els.searchBtn.disabled = !e.target.checked || !state.destination;
   });
-  els.searchBtn.addEventListener('click', handleSearchPreview);
   els.generateBtn.addEventListener('click', handleGenerateGuide);
 }
 
 function validateForm() {
   state.destination = els.destination.value.trim();
   const valid = state.destination.length > 0;
-  els.searchBtn.disabled = !valid || !state.enableSearch;
   els.generateBtn.disabled = !valid;
 }
 
