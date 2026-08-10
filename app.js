@@ -647,16 +647,17 @@ async function buildGuideMock(dest, days, budget, style, news) {
   const season = month >= 3 && month <= 5 ? '春季' :
                  month >= 6 && month <= 8 ? '夏季' :
                  month >= 9 && month <= 11 ? '秋季' : '冬季';
+  const safeStyle = style || '经典观光';
   const styleFocus = {
     '经典观光': { focus: '地标 & 历史景点', tag: ['必打卡', '经典路线', '文化古迹'] },
     '休闲度假': { focus: '放松 & 慢节奏', tag: ['精品酒店', 'SPA', '下午茶'] },
     '探险户外': { focus: '自然 & 户外运动', tag: ['徒步', '露营', '自然风光'] },
     '文化深度游': { focus: '人文 & 历史底蕴', tag: ['博物馆', '老城区', '民俗'] },
     '美食之旅': { focus: '地道美食 & 探店', tag: ['本地人推荐', '老字号', '小吃街'] },
-  }[style];
+  }[safeStyle];
   const daysArr = [];
-  const dayThemes = getDayThemes(style, days);
-  const allAttractions = getAttractionsPool(dest, style);
+  const dayThemes = getDayThemes(safeStyle, days);
+  const allAttractions = getAttractionsPool(dest, safeStyle);
   const foods = getFoodPool(dest);
   const slots = (typeof state !== 'undefined' && state.slots) ? state.slots : { morning: true, noon: true, afternoon: true, evening: true };
   const slotDefs = [
@@ -673,7 +674,7 @@ async function buildGuideMock(dest, days, budget, style, news) {
   const poolAttractions = allAttractions.slice(scheduledCount);
   const renderAttractionCard = (attr, slotKey, dayIdx, img, dest) => `
     <div class="spot-card draggable-spot" draggable="true" data-spot-id="day${dayIdx+1}-${slotKey}" data-spot-name="${escapeHtml(attr.name)}" data-spot-emoji="${attr.emoji}" data-spot-duration="${attr.duration}" data-spot-tag="${attr.tag}" data-spot-address="${escapeHtml(attr.address || '')}" data-spot-imageurl="${escapeHtml(img)}">
-      <div class="spot-photo"><img src="${img}" alt="${escapeHtml(attr.name)} 实景图" loading="lazy" onerror="this.onerror=null;this.src='https://loremflickr.com/500/500/travel,landmark,city?lock='+Math.floor(Math.random()*9999)"/><span class="spot-photo-emoji">${attr.emoji}</span></div>
+      <div class="spot-photo"><img src="${img}" alt="${escapeHtml(attr.name)} 实景图" loading="lazy" onerror="handleImgError(this)"/><span class="spot-photo-emoji">${attr.emoji}</span></div>
       <div class="spot-info">
         <div class="spot-name">${escapeHtml(attr.name)}</div>
         <div class="spot-meta">⏱ ${attr.duration} · #${attr.tag}${attr.address ? `<br />📍 ${escapeHtml(attr.address)}` : ''}</div>
@@ -738,13 +739,14 @@ async function buildGuideMock(dest, days, budget, style, news) {
     '电子：充电宝、充电线、耳机、相机',
     '洗护：洗漱用品、防晒霜、面膜、护肤品',
     '药品：感冒药、肠胃药、晕车药、创可贴',
-    style === '探险户外' ? '户外：登山杖、背包、水壶、冲锋衣' : '',
-    style === '休闲度假' ? '度假：泳衣、墨镜、沙滩巾、防晒衣' : '',
+    safeStyle === '探险户外' ? '户外：登山杖、背包、水壶、冲锋衣' : '',
+    safeStyle === '休闲度假' ? '度假：泳衣、墨镜、沙滩巾、防晒衣' : '',
   ].filter(Boolean).map((s) => s.replace('${season}', season));
+  const tipsList = buildTravelTips(dest, safeStyle, season, days);
   return `
     <div class="guide-section">
       <h3><span class="sec-icon">📋</span>行程概览</h3>
-      <p><strong>目的地：</strong>${dest}　｜　<strong>行程：</strong>${days} 天（${fmtDateCN(state.startDate)} - ${fmtDateCN(state.endDate)}）　｜　<strong>风格：</strong>${style}　｜　<strong>酒店预算：</strong>${budgetText}</p>
+      <p><strong>目的地：</strong>${dest}　｜　<strong>行程：</strong>${days} 天（${fmtDateCN(state.startDate)} - ${fmtDateCN(state.endDate)}）　｜　<strong>风格：</strong>${safeStyle}　｜　<strong>酒店预算：</strong>${budgetText}</p>
       <div class="tag-row">
         ${styleFocus.tag.map((t) => `<span class="tag">#${t}</span>`).join('')}
         <span class="tag">${season}</span>
@@ -765,10 +767,10 @@ async function buildGuideMock(dest, days, budget, style, news) {
       <p style="margin-bottom:12px;color:var(--text-soft);font-size:13px;">以下景点因行程时间有限未能排入，你可以<strong>拖拽</strong>其中任意一个到上方行程的上午/下午格子进行替换。也可将上方已排景点拖回此处。</p>
       <div class="pool-grid" id="spotPool">
         ${poolAttractions.map((a, i) => {
-          const img = pickSpotImageFromNews(a.name, dest, style, news);
+          const img = pickSpotImageFromNews(a.name, dest, safeStyle, news);
           return `
           <div class="spot-card pool-spot draggable-spot" draggable="true" data-spot-id="pool-${i}" data-spot-name="${escapeHtml(a.name)}" data-spot-emoji="${a.emoji}" data-spot-duration="${a.duration}" data-spot-tag="${a.tag}" data-spot-address="${escapeHtml(a.address || '')}" data-spot-imageurl="${escapeHtml(img)}">
-            <div class="spot-photo"><img src="${img}" alt="${escapeHtml(a.name)} 照片" loading="lazy" onerror="this.onerror=null;this.src='https://loremflickr.com/500/500/travel,landmark,city?lock='+Math.floor(Math.random()*9999)"/><span class="spot-photo-emoji">${a.emoji}</span></div>
+            <div class="spot-photo"><img src="${img}" alt="${escapeHtml(a.name)} 照片" loading="lazy" onerror="handleImgError(this)"/><span class="spot-photo-emoji">${a.emoji}</span></div>
             <div class="spot-info">
               <div class="spot-name">${escapeHtml(a.name)}</div>
               <div class="spot-meta">⏱ ${a.duration} · #${a.tag}${a.address ? `<br />📍 ${escapeHtml(a.address)}` : ''}</div>
@@ -816,7 +818,45 @@ async function buildGuideMock(dest, days, budget, style, news) {
       <h3><span class="sec-icon">💸</span>预算估算（人均）</h3>
       ${estimateBudget(days, budget)}
     </div>
+    <div class="guide-section">
+      <h3><span class="sec-icon">💡</span>旅行小贴士</h3>
+      <ul>
+        ${tipsList.map((t) => `<li>${t}</li>`).join('')}
+      </ul>
+    </div>
   `;
+}
+
+function buildTravelTips(dest, style, season, days) {
+  const baseTips = [
+    `<strong>出发前</strong>：提前在携程/飞猪上预订往返大交通（机票/高铁），<strong>旺季至少提前 2-4 周</strong>，越早越便宜；`,
+    `<strong>住宿建议</strong>：选择 <strong>${dest}市中心 / 地铁口 / 景点密集区</strong> 附近的酒店，节省交通时间，晚上逛完回酒店也安全；`,
+    `<strong>门票预约</strong>：热门景点（博物馆/纪念馆/网红打卡地）务必 <strong>提前 1-3 天在官方小程序预约</strong>，现场不一定能买到票；`,
+    `<strong>交通出行</strong>：建议提前下载 <strong>高德地图 + 本地地铁官方 App</strong>，开通乘车码或购买交通卡，避免排队买票；`,
+    `<strong>支付准备</strong>：确认手机支付（微信/支付宝）可用，备 <strong>少量现金（约 ¥200-500）</strong> 以防部分小店或偏远场景不能扫码；`,
+    `<strong>网络通讯</strong>：如目的地需要漫游或境外，提前在运营商 App 上开通流量包 / 购买当地电话卡，<strong>落地前装好</strong>；`,
+    `<strong>保险护航</strong>：出行前购买 <strong>旅行意外险</strong>（含医疗、航班延误、行李丢失），一般几十块钱，买个安心；`,
+    `<strong>健康防护</strong>：随身带口罩、免洗洗手液、常备药；有基础病的朋友务必 <strong>备足药品 + 处方单</strong>；`,
+  ];
+  const seasonTips = {
+    '春季': ['🌸 春季多雨水，建议随身带折叠伞和薄款防风外套，早晚温差大约 5-10℃；'],
+    '夏季': ['☀️ 夏季紫外线强，防晒霜 SPF50+、遮阳帽、墨镜、小风扇必备；注意补水防中暑；'],
+    '秋季': ['🍂 秋季气候宜人，但干燥地区注意润肤保湿；山区早晚温差大，带一件保暖外套；'],
+    '冬季': ['❄️ 冬季寒冷地区注意保暖（羽绒服+保暖内衣+防滑鞋）；电子产品低温掉电快，随身带充电宝；'],
+  };
+  const styleTips = {
+    '经典观光': ['🏛️ 经典观光路线步行较多，建议穿 <strong>软底舒适的徒步鞋/运动鞋</strong>，日均步数 1.5-2 万步很正常；', '📸 热门地标拍照建议 <strong>早 8 点前或晚 6 点后</strong>到达，避开人流，出片率更高；'],
+    '休闲度假': ['🏖️ 休闲度假主打放松，不要把行程排太满，预留「发呆」时间；', '🛁 度假酒店建议 <strong>直接预订含早餐的房型</strong>，不用早起找餐厅，体验感会好很多；'],
+    '探险户外': ['🥾 户外运动前一定要 <strong>热身 10-15 分钟</strong>，了解路线难度和天气，量力而行不要硬闯野路；', '🆘 把 <strong>紧急联系人电话、当地救援电话</strong> 存手机+写在卡片上放背包里，出发前告知家人当天路线；'],
+    '文化深度游': ['🎭 参观博物馆/历史景点前，建议花 <strong>10-15 分钟看一下简介或听语音导览</strong>，观感完全不一样；', '🙏 进入宗教场所、历史建筑注意 <strong>着装规范</strong>（不露肩不露膝），遵守拍照禁令；'],
+    '美食之旅': ['🍜 美食探店建议 <strong>错峰出行</strong>：午餐 11:00-11:30，晚餐 17:00-17:30，避开排队高峰；', '💧 肠胃敏感的朋友，<strong>生冷食物不要贪多</strong>，随身备益生菌/肠胃药；小吃街注意饮食卫生；'],
+  };
+  return [
+    ...baseTips,
+    ...(seasonTips[season] || []),
+    ...(styleTips[style] || styleTips['经典观光']),
+    `<strong>行程弹性</strong>：上面是 ${days} 天推荐行程，实际出行可根据体力、天气、心情灵活调整，<strong>旅行最重要的是开心，不要被行程绑死！</strong>`,
+  ];
 }
 
 function getDayThemes(style, days) {
@@ -1158,62 +1198,55 @@ function pickFacilitiesByTier(tier) {
   return base.concat(['行政酒廊', '健身房', '泳池', 'SPA', '商务中心', '免费停车', '接机服务', '儿童乐园']);
 }
 
-function buildHotelCoverUrl(idx, tier, dest) {
-  // 兼容不同的调用方式
-  const realIdx = typeof idx === 'number' ? idx : 0;
-  const keywords = [
-    'luxury,hotel,architecture',
-    'boutique,hotel,old,building',
-    'resort,hotel,pool,sunset',
-    'hotel,room,interior,lobby',
-    'hotel,bedroom,suite,luxury',
-  ];
-  const k = keywords[realIdx % keywords.length];
-  return `https://loremflickr.com/800/450/${k}?lock=h${realIdx}`;
-}
-function buildHotelImageUrl(roomStyle, hotelIdx, roomIdx, dest) {
-  const map = {
-    bedroom:   'hotel,bedroom,interior',
-    twin:      'hotel,room,twin,bed',
-    deluxe:    'hotel,deluxe,room,city,view',
-    suite:     'hotel,suite,living,room',
-    family:    'hotel,family,room,kids',
-    penthouse: 'hotel,penthouse,luxury',
-  };
-  const k = map[roomStyle] || map.bedroom;
-  const seed = `r${hotelIdx}${roomIdx}`;
-  return `https://loremflickr.com/600/450/${k}?lock=${seed}`;
-}
-
 function buildSpotImageUrl(spotName, dest, style) {
   const spot = String(spotName || dest + '景点');
   const has = (kw) => spot.includes(kw);
   let kw = 'travel,attraction,sightseeing';
+  let unsplashKw = 'travel';
   if (has('古城') || has('老城') || has('步行') || has('寺庙') || has('历史') || has('古村') || has('古村落') || has('老宅') || has('非遗') || has('民俗')) {
-    kw = 'ancient,architecture,heritage,china';
+    kw = 'ancient,architecture,heritage,china'; unsplashKw = 'ancient-temple-china';
   } else if (has('海边') || has('海滨') || has('沙滩') || has('湖畔') || has('河滨') || has('海景') || has('山水') || has('自然') || has('山景')) {
-    kw = 'landscape,scenic,nature,mountain';
+    kw = 'landscape,scenic,nature,mountain'; unsplashKw = 'mountain-landscape';
   } else if (has('美食') || has('小吃') || has('火锅') || has('烧烤') || has('咖啡') || has('甜品') || has('茶馆') || has('早餐') || has('餐厅') || has('咖啡馆')) {
-    kw = 'food,restaurant,cuisine,chinese';
+    kw = 'food,restaurant,cuisine,chinese'; unsplashKw = 'food-restaurant';
   } else if (has('博物馆') || has('文化馆') || has('艺术') || has('展览')) {
-    kw = 'museum,art,exhibition,gallery';
+    kw = 'museum,art,exhibition,gallery'; unsplashKw = 'museum-art';
   } else if (has('公园') || has('花园')) {
-    kw = 'park,green,garden,outdoor';
+    kw = 'park,green,garden,outdoor'; unsplashKw = 'park-garden';
   } else if (has('地标') || has('广场') || has('建筑') || has('观景') || has('旋转') || has('摩天')) {
-    kw = 'landmark,architecture,skyline,city';
+    kw = 'landmark,architecture,skyline,city'; unsplashKw = 'city-skyline';
   } else if (has('夜市') || has('夜景')) {
-    kw = 'night,market,neon,street';
+    kw = 'night,market,neon,street'; unsplashKw = 'night-city';
   } else if (has('网红') || has('打卡')) {
-    kw = 'instagram,trendy,place,photo';
+    kw = 'instagram,trendy,place,photo'; unsplashKw = 'photography';
   } else if (has('亲子') || has('乐园') || has('游乐场')) {
-    kw = 'amusement,park,family,fun';
+    kw = 'amusement,park,family,fun'; unsplashKw = 'amusement-park';
   } else if (has('市场') || has('集市') || has('购物')) {
-    kw = 'market,shopping,street,vendor';
+    kw = 'market,shopping,street,vendor'; unsplashKw = 'market-street';
   } else if (has('摄影') || has('机位') || has('出片')) {
-    kw = 'photography,viewpoint,scenic,landscape';
+    kw = 'photography,viewpoint,scenic,landscape'; unsplashKw = 'scenic-view';
   }
   const hash = Array.from(spot).reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0, 0);
-  return `https://loremflickr.com/500/500/${kw}?lock=s${Math.abs(hash) % 9999}`;
+  const seed = Math.abs(hash) % 9999;
+  return `https://picsum.photos/seed/s${seed}/500/500`;
+}
+function buildHotelCoverUrl(idx, tier, dest) {
+  const realIdx = typeof idx === 'number' ? idx : 0;
+  const seed = `h${realIdx}${tier || 'f'}`;
+  return `https://picsum.photos/seed/${seed}/800/450`;
+}
+function buildHotelImageUrl(roomStyle, hotelIdx, roomIdx, dest) {
+  const map = {
+    bedroom:   'bedroom',
+    twin:      'twin-bed',
+    deluxe:    'deluxe-room',
+    suite:     'suite-living',
+    family:    'family-room',
+    penthouse: 'penthouse-luxury',
+  };
+  const k = map[roomStyle] || 'bedroom';
+  const seed = `r${hotelIdx}${roomIdx}${k}`;
+  return `https://picsum.photos/seed/${seed}/600/450`;
 }
 
 function pickSpotImageFromNews(spotName, dest, style, news) {
@@ -1280,6 +1313,48 @@ function rand(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
 function escapeHtml(str = '') {
   return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
+/* ========== 多级图片 Fallback（picsum → loremflickr → placeholder） ========== */
+window._imgFallbackIdx = window._imgFallbackIdx || 0;
+function handleImgError(imgEl) {
+  try {
+    if (!imgEl || !imgEl.dataset) return;
+    const tries = Number(imgEl.dataset.fbTries || '0');
+    const randSeed = Math.floor(Math.random() * 999999);
+    // 三级 fallback，避免死循环：最多尝试 3 次
+    if (tries >= 3) {
+      // 最后使用纯颜色 SVG 占位（DataURI，100% 成功）
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='500' height='500'><rect fill='%23f5efe7' width='100%25' height='100%25'/><text x='50%25' y='50%25' font-size='80' text-anchor='middle' dy='.3em' fill='%23d4a373'>🏞️</text></svg>`;
+      imgEl.onerror = null;
+      imgEl.src = 'data:image/svg+xml;charset=utf-8,' + svg;
+      return;
+    }
+    imgEl.dataset.fbTries = String(tries + 1);
+    const originalSrc = imgEl.dataset.fbOriginal || imgEl.src || '';
+    if (!imgEl.dataset.fbOriginal) imgEl.dataset.fbOriginal = originalSrc;
+    const isW = (imgEl.naturalWidth || imgEl.width || 500);
+    const isH = (imgEl.naturalHeight || imgEl.height || 500);
+    const w = Math.max(200, isW || 500);
+    const h = Math.max(200, isH || 500);
+    // 根据尝试次数切换源
+    if (tries === 0) {
+      // 第一次失败：换另一个 picsum seed
+      imgEl.src = `https://picsum.photos/seed/fb${randSeed}/${w}/${h}`;
+    } else if (tries === 1) {
+      // 第二次失败：换 loremflickr
+      imgEl.src = `https://loremflickr.com/${w}/${h}/travel,landmark,city?lock=${randSeed}`;
+    } else {
+      // 第三次失败：直接走 SVG
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'><rect fill='%23f5efe7' width='100%25' height='100%25'/><text x='50%25' y='50%25' font-size='${Math.floor(Math.min(w,h)*0.2)}' text-anchor='middle' dy='.3em' fill='%23d4a373'>🏞️</text></svg>`;
+      imgEl.onerror = null;
+      imgEl.src = 'data:image/svg+xml;charset=utf-8,' + svg;
+    }
+  } catch (e) {
+    // 终极安全网
+    try {
+      if (imgEl) { imgEl.onerror = null; imgEl.style.opacity = '0.3'; }
+    } catch (_) {}
+  }
+}
 
 /* ===== 酒店卡片渲染 ===== */
 function renderHotelCards(hotels, dest) {
@@ -1288,7 +1363,7 @@ function renderHotelCards(hotels, dest) {
   return hotels.map((h) => `
     <div class="hotel-card">
       <div class="hotel-cover">
-        <img src="${h.cover}" alt="${escapeHtml(h.name)} 封面" loading="lazy" onerror="this.onerror=null;this.src='https://loremflickr.com/800/450/luxury,hotel,resort?lock='+Math.floor(Math.random()*9999)"/>
+        <img src="${h.cover}" alt="${escapeHtml(h.name)} 封面" loading="lazy" onerror="handleImgError(this)"/>
       </div>
       <div class="hotel-head">
         <div class="hotel-title-row">
@@ -1325,7 +1400,7 @@ function renderRoomCard(r) {
   return `
     <div class="room-card">
       <div class="room-photo">
-        <img src="${r.image}" alt="${escapeHtml(r.type)} 房间图" loading="lazy" onerror="this.onerror=null;this.src='https://loremflickr.com/600/450/hotel,bedroom,interior?lock='+Math.floor(Math.random()*9999)"/>
+        <img src="${r.image}" alt="${escapeHtml(r.type)} 房间图" loading="lazy" onerror="handleImgError(this)"/>
       </div>
       <div class="room-body">
         <div class="room-head">
