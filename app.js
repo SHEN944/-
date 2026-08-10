@@ -892,32 +892,268 @@ function getDayThemes(style, days) {
   return t.slice(0, days).concat(Array(Math.max(0, days - t.length)).fill('自由活动'));
 }
 
+/* ========== 热门城市「抖音/小红书真实必去景点」精确映射 ==========
+   —— 按【必去程度】排序，每个城市前8~14个都是真正的热门地标/美食/网红打卡点
+   —— 地址字段特意带上「市中心/老城区/地铁X号线/市中心XXkm」关键词，供 estimateDistance 就近排序算法识别 */
+const HOT_CITY_SPOTS = {
+  '西安': {
+    classic: [ // 前6必去（抖音/小红书西安攻略高频）
+      { name: '西安城墙（永宁门登城）',     emoji: '🏯', duration: '2-3h', tag: '必打卡,地标',  address: '西安市碑林区南大街2号永宁门 · 市中心老城区，地铁2号线永宁门站D出口' },
+      { name: '秦始皇兵马俑博物馆',         emoji: '🏺', duration: '半天', tag: '必打卡,经典',  address: '西安市临潼区秦陵北路 · 距市中心约38km，地铁9号线华清池站转专线车' },
+      { name: '陕西历史博物馆',             emoji: '🏛️', duration: '2-3h', tag: '必打卡,文化',  address: '西安市雁塔区小寨东路91号 · 小寨市中心，地铁2号线小寨站B出口' },
+      { name: '大雁塔·大唐不夜城步行街',    emoji: '🗼', duration: '3-4h', tag: '必打卡,夜景',  address: '西安市雁塔区雁塔南路北端 · 曲江新区市中心，地铁3号线大雁塔站C出口' },
+      { name: '回民街（钟鼓楼美食圈）',     emoji: '🍜', duration: '2h',   tag: '必打卡,美食',  address: '西安市莲湖区北院门1号回民街 · 市中心钟楼西北侧，地铁2号线钟楼站B出口' },
+      { name: '华清宫·骊山',                emoji: '🛕', duration: '半天', tag: '经典',         address: '西安市临潼区华清路38号 · 距市中心约30km，地铁9号线华清池站' },
+    ],
+    addons: [
+      { name: '西安碑林博物馆',             emoji: '📚', duration: '1-2h', tag: '文化',         address: '西安市碑林区三学街15号 · 老城区文昌门内，步行到城墙500米' },
+      { name: '永兴坊（摔碗酒）',           emoji: '🥣', duration: '1-2h', tag: '美食,网红',    address: '西安市新城区东新街中山门里 · 老城区东侧，城墙中山门旁' },
+      { name: '大唐芙蓉园',                 emoji: '🌸', duration: '2-3h', tag: '夜景,网红',    address: '西安市雁塔区芙蓉西路99号 · 曲江新区市中心，地铁4号线大唐芙蓉园站' },
+      { name: '小雁塔·西安博物院',          emoji: '🗼', duration: '2h',   tag: '文化',         address: '西安市碑林区友谊西路72号 · 市中心南稍门，地铁2号线南稍门站' },
+      { name: '青龙寺（樱花季必去）',        emoji: '🌸', duration: '1-2h', tag: '网红,自然',    address: '西安市雁塔区西影路铁炉庙村北1号 · 地铁3号线青龙寺站A出口' },
+      { name: '洒金桥（本地美食街）',        emoji: '🥟', duration: '1-2h', tag: '美食',         address: '西安市莲湖区洒金桥 · 老城区西北侧，地铁1号线洒金桥站B出口' },
+      { name: '大明宫国家遗址公园',          emoji: '🏚️', duration: '2h',   tag: '历史',         address: '西安市新城区自强东路585号 · 老城区北郊，地铁2号线大明宫西站' },
+      { name: '华山（一日游）',              emoji: '🥾', duration: '全天', tag: '自然,探险',    address: '渭南市华阴市华山镇 · 距西安市中心约120km，高铁华山北站40分钟' },
+    ],
+    foodStyle: [ // 美食之旅额外插入
+      { name: '大车家巷面食街',             emoji: '🍜', duration: '2h',   tag: '美食',         address: '西安市碑林区大车家巷 · 老城区钟楼西南侧，步行到钟楼400米' },
+      { name: '东新街夜市',                 emoji: '🍻', duration: '2h',   tag: '美食',         address: '西安市新城区东新街 · 老城区东侧，晚上18点后开市' },
+    ],
+    cultureStyle: [ // 文化深度游额外插入
+      { name: '关中书院',                   emoji: '📚', duration: '1h',   tag: '文化',         address: '西安市碑林区书院门63号 · 老城区南门内，步行街入口50米' },
+    ],
+  },
+  '成都': {
+    classic: [
+      { name: '大熊猫繁育研究基地',         emoji: '🐼', duration: '半天', tag: '必打卡,地标',  address: '成都市成华区熊猫大道1375号 · 市区北3环，地铁3号线熊猫大道站B出口转直达车' },
+      { name: '宽窄巷子',                   emoji: '🏮', duration: '2h',   tag: '必打卡,经典',  address: '成都市青羊区长顺上街127号 · 市中心老城区，地铁4号线宽窄巷子站' },
+      { name: '锦里古街·武侯祠',            emoji: '🏮', duration: '2-3h', tag: '必打卡,经典',  address: '成都市武侯区武侯祠大街231号 · 市中心西南侧，地铁3号线高升桥站D出口' },
+      { name: '春熙路·太古里·IFS爬墙熊猫',  emoji: '🛍️', duration: '2-3h', tag: '必打卡,网红',  address: '成都市锦江区红星路三段 · 市中心核心商圈，地铁2号线春熙路站' },
+      { name: '杜甫草堂',                   emoji: '🏡', duration: '1-2h', tag: '文化',         address: '成都市青羊区青华路37号 · 市中心西南，地铁4号线草堂北路站' },
+      { name: '青羊宫',                     emoji: '🛕', duration: '1h',   tag: '历史',         address: '成都市青羊区一环路西二段9号 · 市中心西南，地铁5号线青羊宫站' },
+    ],
+    addons: [
+      { name: '人民公园（鹤鸣茶社）',        emoji: '🍵', duration: '1-2h', tag: '休闲',         address: '成都市青羊区少城路12号 · 市中心西侧，地铁2号线人民公园站D出口' },
+      { name: '文殊院',                     emoji: '🛕', duration: '1h',   tag: '历史',         address: '成都市青羊区文殊院街66号 · 市中心北侧，地铁1号线文殊院站K出口' },
+      { name: '望江楼公园',                 emoji: '🎍', duration: '1-2h', tag: '自然',         address: '成都市武侯区望江路30号 · 市区东南九眼桥，公交18路望江楼公园站' },
+      { name: '东郊记忆（网红文创园）',      emoji: '📸', duration: '2h',   tag: '网红,文艺',    address: '成都市成华区建设南支路4号 · 东2环，地铁8号线东郊记忆站' },
+      { name: '环球中心·天堂岛海洋乐园',    emoji: '🎡', duration: '半天', tag: '亲子',         address: '成都市武侯区天府大道北段1700号 · 高新区南，地铁1号线锦城广场站' },
+      { name: '青城山（一日游）',            emoji: '🥾', duration: '全天', tag: '自然,探险',    address: '都江堰市青城山 · 距成都市中心约65km，高铁青城山站50分钟' },
+      { name: '都江堰景区（一日游）',        emoji: '🌊', duration: '半天', tag: '经典',         address: '都江堰市公园路 · 距成都市中心约55km，高铁都江堰站40分钟' },
+      { name: '九眼桥·兰桂坊酒吧街',        emoji: '🍻', duration: '2h',   tag: '夜景',         address: '成都市锦江区九眼桥南桥头 · 市中心东南，地铁2号线牛王庙站' },
+    ],
+    foodStyle: [
+      { name: '玉林路（小酒馆）',           emoji: '🍺', duration: '2h',   tag: '美食,文艺',    address: '成都市武侯区玉林西路 · 市区西南，地铁8号线芳草街站' },
+      { name: '奎星楼街（网红小吃）',       emoji: '🌶️', duration: '2h',   tag: '美食,网红',    address: '成都市青羊区奎星楼街 · 市中心宽窄巷子旁，步行200米' },
+    ],
+    cultureStyle: [
+      { name: '金沙遗址博物馆',             emoji: '🏺', duration: '2h',   tag: '文化',         address: '成都市青羊区金沙遗址路2号 · 市区西2环，地铁7号线金沙遗址博物馆站' },
+      { name: '四川博物院',                 emoji: '🏛️', duration: '2-3h', tag: '文化',         address: '成都市青羊区浣花南路251号 · 市区西南，地铁5号线青羊宫站转公交' },
+    ],
+  },
+  '重庆': {
+    classic: [
+      { name: '洪崖洞（千厮门大桥夜景）',    emoji: '🌃', duration: '2-3h', tag: '必打卡,夜景',  address: '重庆市渝中区沧白路69号 · 市中心解放碑北侧，地铁6号线小什字站4A出口' },
+      { name: '解放碑步行街',               emoji: '🏛️', duration: '2h',   tag: '必打卡,地标',  address: '重庆市渝中区民权路 · 市中心核心商圈，地铁1/2号线较场口站' },
+      { name: '李子坝轻轨穿楼观景台',        emoji: '🚈', duration: '1h',   tag: '必打卡,网红',  address: '重庆市渝中区李子坝正街39号 · 市区西，地铁2号线李子坝站A出口' },
+      { name: '长江索道',                   emoji: '🚠', duration: '1h',   tag: '必打卡,经典',  address: '重庆市渝中区新华路153号 · 市中心，地铁1号线小什字站5B出口' },
+      { name: '磁器口古镇',                 emoji: '🏮', duration: '2-3h', tag: '必打卡,经典',  address: '重庆市沙坪坝区磁器口南街1号 · 市区西，地铁1号线磁器口站' },
+      { name: '十八梯传统风貌区',           emoji: '🏚️', duration: '2h',   tag: '必打卡,网红',  address: '重庆市渝中区中兴路1号 · 市中心解放碑南侧，地铁1号线较场口站10出口' },
+    ],
+    addons: [
+      { name: '南山一棵树观景台',           emoji: '🔭', duration: '1-2h', tag: '夜景',         address: '重庆市南岸区南山一棵树 · 市区南山上，打车到解放碑20分钟' },
+      { name: '鹅岭二厂文创公园',           emoji: '📸', duration: '2h',   tag: '网红,文艺',    address: '重庆市渝中区鹅岭正街1号 · 市区半岛中轴，地铁1号线鹅岭站1出口' },
+      { name: '武隆天生三桥（一日游）',      emoji: '🥾', duration: '全天', tag: '自然,探险',    address: '重庆市武隆区仙女山镇 · 距市中心约180km，火车/大巴2.5h' },
+      { name: '大足石刻（一日游）',          emoji: '🏺', duration: '半天', tag: '文化,经典',    address: '重庆市大足区宝顶镇 · 距市中心约120km，高铁大足南站50分钟' },
+      { name: '白象居（长江索道空中走廊）',  emoji: '📸', duration: '1h',   tag: '网红',         address: '重庆市渝中区白象街1-6号 · 市中心东，地铁6号线小什字站7B出口' },
+      { name: '四川美术学院黄桷坪涂鸦街',    emoji: '🎨', duration: '1-2h', tag: '文艺,网红',    address: '重庆市九龙坡区黄桷坪正街108号 · 市区西南，公交223路黄桷坪站' },
+      { name: '观音桥步行街',               emoji: '🛍️', duration: '2h',   tag: '购物,夜景',    address: '重庆市江北区观音桥步行街 · 江北市中心，地铁3/9号线观音桥站' },
+      { name: '朝天门广场',                 emoji: '⛴️', duration: '1-2h', tag: '地标',         address: '重庆市渝中区长江滨江路朝天门 · 市中心东端，地铁1号线朝天门站' },
+    ],
+    foodStyle: [
+      { name: '观音桥好吃街',               emoji: '🍜', duration: '2h',   tag: '美食',         address: '重庆市江北区观音桥步行街星天广场 · 江北市中心，地铁3号线观音桥站' },
+      { name: '八一好吃街（解放碑）',        emoji: '🌶️', duration: '2h',   tag: '美食,网红',    address: '重庆市渝中区八一路 · 市中心解放碑旁，步行50米' },
+    ],
+  },
+  '北京': {
+    classic: [
+      { name: '天安门广场·故宫（紫禁城）',   emoji: '🏯', duration: '半天', tag: '必打卡,地标',  address: '北京市东城区长安街 · 市中心老城区，地铁1号线天安门西站/东站' },
+      { name: '八达岭长城',                 emoji: '🥾', duration: '全天', tag: '必打卡,经典',  address: '北京市延庆区八达岭镇 · 距市中心约70km，北京北站S2线1.5h' },
+      { name: '颐和园',                     emoji: '🏞️', duration: '半天', tag: '必打卡,经典',  address: '北京市海淀区新建宫门路19号 · 市区西北4环，地铁4号线北宫门站' },
+      { name: '天坛公园',                   emoji: '🛕', duration: '2h',   tag: '必打卡,经典',  address: '北京市东城区天坛东里甲1号 · 市中心南2环，地铁5号线天坛东门站' },
+      { name: '南锣鼓巷·什刹海',            emoji: '🏮', duration: '2-3h', tag: '必打卡,经典',  address: '北京市东城区南锣鼓巷 · 市中心北老城区，地铁6/8号线南锣鼓巷站' },
+      { name: '鸟巢·水立方（奥体中心）',    emoji: '🗼', duration: '1-2h', tag: '必打卡,地标',  address: '北京市朝阳区国家体育场南路1号 · 市中心北4环，地铁8号线奥体中心站' },
+    ],
+    addons: [
+      { name: '圆明园遗址公园',             emoji: '🏚️', duration: '2-3h', tag: '历史',         address: '北京市海淀区清华西路28号 · 颐和园东侧，地铁4号线圆明园站' },
+      { name: '798艺术区',                  emoji: '📸', duration: '2h',   tag: '网红,文艺',    address: '北京市朝阳区酒仙桥路4号 · 市区东北，地铁14号线将台站A出口' },
+      { name: '国家博物馆',                 emoji: '🏛️', duration: '2-3h', tag: '文化',         address: '北京市东城区东长安街16号 · 天安门广场东侧，地铁1号线天安门东站' },
+      { name: '北海公园',                   emoji: '🌳', duration: '2h',   tag: '休闲',         address: '北京市西城区文津街1号 · 市中心故宫北侧，地铁4号线北海北站' },
+      { name: '王府井步行街',               emoji: '🛍️', duration: '2h',   tag: '购物,美食',    address: '北京市东城区王府井大街 · 市中心，地铁1号线王府井站' },
+      { name: '恭王府',                     emoji: '🏡', duration: '1-2h', tag: '历史',         address: '北京市西城区前海西街17号 · 什刹海西北侧，地铁6号线北海北站' },
+      { name: '雍和宫',                     emoji: '🛕', duration: '1h',   tag: '历史',         address: '北京市东城区雍和宫大街12号 · 市中心北2环，地铁2/5号线雍和宫站' },
+      { name: '三里屯太古里',               emoji: '🍻', duration: '2h',   tag: '网红,夜景',    address: '北京市朝阳区三里屯路19号 · 市中心东3环，地铁10号线团结湖站' },
+    ],
+    foodStyle: [
+      { name: '牛街清真美食街',             emoji: '🥘', duration: '2h',   tag: '美食',         address: '北京市西城区牛街 · 市中心西南2环，地铁7号线广安门内站' },
+      { name: '簋街（东直门夜宵）',         emoji: '🌶️', duration: '2h',   tag: '美食,夜景',    address: '北京市东城区东直门内大街 · 市中心东2环，地铁2/13号线东直门站' },
+    ],
+    cultureStyle: [
+      { name: '首都博物馆',                 emoji: '🏛️', duration: '2-3h', tag: '文化',         address: '北京市西城区复兴门外大街16号 · 市中心西，地铁1号线木樨地站' },
+      { name: '潘家园旧货市场',             emoji: '🛒', duration: '2h',   tag: '文化,体验',    address: '北京市朝阳区华威里18号 · 市区东南3环，地铁10号线潘家园站' },
+    ],
+  },
+  '上海': {
+    classic: [
+      { name: '外滩·万国建筑群（夜景）',    emoji: '🌃', duration: '2-3h', tag: '必打卡,夜景',  address: '上海市黄浦区中山东一路 · 市中心黄浦江畔，地铁2号线南京东路站' },
+      { name: '东方明珠·陆家嘴三件套',      emoji: '🗼', duration: '2-3h', tag: '必打卡,地标',  address: '上海市浦东新区世纪大道1号 · 市中心浦东，地铁2号线陆家嘴站' },
+      { name: '豫园·城隍庙（上海老街）',     emoji: '🏮', duration: '2-3h', tag: '必打卡,经典',  address: '上海市黄浦区福佑路168号 · 市中心老城区，地铁10号线豫园站' },
+      { name: '南京路步行街',               emoji: '🛍️', duration: '2h',   tag: '必打卡,购物',  address: '上海市黄浦区南京东路 · 市中心核心，地铁2/10号线南京东路站' },
+      { name: '上海迪士尼乐园',             emoji: '🎡', duration: '全天', tag: '必打卡,亲子',  address: '上海市浦东新区申迪西路753号 · 浦东东南部，地铁11号线迪士尼站' },
+      { name: '田子坊',                     emoji: '📸', duration: '2h',   tag: '必打卡,网红',  address: '上海市黄浦区泰康路210弄 · 市中心南卢湾，地铁9号线打浦桥站1出口' },
+    ],
+    addons: [
+      { name: '上海博物馆',                 emoji: '🏛️', duration: '2-3h', tag: '文化',         address: '上海市黄浦区人民大道201号 · 市中心人民广场，地铁1/2/8号线人民广场站' },
+      { name: '武康路·武康大楼（梧桐区）',  emoji: '🌳', duration: '2h',   tag: '网红,文艺',    address: '上海市徐汇区武康路 · 市中心西南法租界，地铁10号线上海图书馆站' },
+      { name: '朱家角古镇',                 emoji: '🏚️', duration: '半天', tag: '经典',         address: '上海市青浦区朱家角镇 · 西郊距市中心约48km，地铁17号线朱家角站' },
+      { name: '崇明岛东平森林公园（一日游）', emoji: '🥾', duration: '全天', tag: '自然,探险',    address: '上海市崇明区北沿公路2188号 · 长江入海口，申崇专线2h' },
+      { name: '新天地·石库门',              emoji: '🍻', duration: '2h',   tag: '夜景,网红',    address: '上海市黄浦区马当路245号 · 市中心南卢湾，地铁10号线新天地站' },
+      { name: '思南公馆',                   emoji: '🏡', duration: '1-2h', tag: '历史,文艺',    address: '上海市黄浦区复兴中路523号 · 市中心南卢湾，地铁10号线新天地站' },
+      { name: '七宝古镇',                   emoji: '🏘️', duration: '1-2h', tag: '美食,人文',    address: '上海市闵行区青年路 · 市区西南，地铁9号线七宝站2出口' },
+      { name: '甜爱路（情侣必去）',         emoji: '❤️', duration: '1h',   tag: '网红',         address: '上海市虹口区甜爱路 · 市中心北四川北路，地铁3号线虹口足球场站' },
+    ],
+    foodStyle: [
+      { name: '云南南路美食街',             emoji: '🥟', duration: '2h',   tag: '美食',         address: '上海市黄浦区云南南路 · 市中心老城区，地铁8/10号线老西门站' },
+      { name: '寿宁路小龙虾夜宵街',         emoji: '🍻', duration: '2h',   tag: '美食,夜景',    address: '上海市黄浦区寿宁路 · 市中心南卢湾，地铁10号线老西门站' },
+    ],
+  },
+  '杭州': {
+    classic: [
+      { name: '西湖（断桥·白堤·苏堤）',     emoji: '🌊', duration: '半天', tag: '必打卡,经典',  address: '杭州市西湖区西湖风景区 · 市中心西侧，地铁1号线龙翔桥站C出口步行到湖滨100米' },
+      { name: '灵隐寺·飞来峰',              emoji: '🛕', duration: '2-3h', tag: '必打卡,经典',  address: '杭州市西湖区法云弄1号 · 市区西，公交7/807路灵隐站' },
+      { name: '南宋御街·河坊街',            emoji: '🏮', duration: '2-3h', tag: '必打卡,经典',  address: '杭州市上城区河坊街 · 市中心老城区，地铁7号线吴山广场站' },
+      { name: '雷峰塔（夕照塔影）',         emoji: '🗼', duration: '1-2h', tag: '必打卡,夜景',  address: '杭州市西湖区南山路15号 · 西湖东南岸，地铁4号线水澄桥站转公交' },
+      { name: '宋城千古情',                 emoji: '🎭', duration: '半天', tag: '必打卡,文化',  address: '杭州市西湖区之江路148号 · 市区西南，地铁6号线枫桦西路站转直达车' },
+      { name: '西溪国家湿地公园',           emoji: '🌳', duration: '半天', tag: '必打卡,自然',  address: '杭州市西湖区天目山路518号 · 市区西，地铁5号线蒋村站' },
+    ],
+    addons: [
+      { name: '龙井村·九溪十八涧',          emoji: '🍵', duration: '半天', tag: '自然,休闲',    address: '杭州市西湖区龙井村 · 西湖风景区西南，公交27/Y3路龙井村站' },
+      { name: '京杭大运河·拱宸桥',          emoji: '⛴️', duration: '2h',   tag: '历史',         address: '杭州市拱墅区桥弄街 · 市区北，地铁5号线大运河站' },
+      { name: '浙江大学之江校区',           emoji: '📚', duration: '1-2h', tag: '文艺,网红',    address: '杭州市西湖区之江路51号 · 市区西南九溪附近，公交4路九溪站' },
+      { name: '中国美术学院象山校区',        emoji: '🎨', duration: '2h',   tag: '文艺,网红',    address: '杭州市西湖区转塘街道象山路352号 · 市区西南，地铁6号线象山站' },
+      { name: '千岛湖（一日游/两日游）',     emoji: '🏞️', duration: '全天', tag: '自然',         address: '杭州市淳安县千岛湖镇 · 距市中心约150km，高铁千岛湖站1.5h' },
+      { name: '塘栖古镇',                   emoji: '🏘️', duration: '1-2h', tag: '美食,人文',    address: '杭州市临平区塘栖镇 · 市区北郊，地铁9号线临平站转公交' },
+      { name: '湘湖',                       emoji: '🌊', duration: '半天', tag: '自然,休闲',    address: '杭州市萧山区风情大道 · 市区南，地铁1号线湘湖站' },
+      { name: '宝石山（保俶塔+夜览西湖）',  emoji: '🔭', duration: '1-2h', tag: '夜景,自然',    address: '杭州市西湖区北山街 · 西湖北岸，地铁1/2号线凤起路站步行10分钟' },
+    ],
+    foodStyle: [
+      { name: '知味观·老字号杭帮菜',        emoji: '🍜', duration: '2h',   tag: '美食',         address: '杭州市上城区仁和路83号 · 市中心湖滨步行街旁，步行到西湖200米' },
+      { name: '外婆家·绿茶餐厅（湖滨）',    emoji: '🍽️', duration: '2h',   tag: '美食',         address: '杭州市上城区平海路124号利星广场 · 市中心湖滨，地铁1号线龙翔桥站' },
+    ],
+  },
+  '厦门': {
+    classic: [
+      { name: '鼓浪屿（日光岩·菽庄花园）',   emoji: '🏝️', duration: '半天', tag: '必打卡,经典',  address: '厦门市思明区鼓浪屿 · 市中心对岸，厦鼓码头乘船20分钟（务必提前预约）' },
+      { name: '厦门大学·芙蓉隧道',          emoji: '📚', duration: '2h',   tag: '必打卡,网红',  address: '厦门市思明区思明南路422号 · 市中心西南，地铁1号线镇海路站转公交29路' },
+      { name: '南普陀寺',                   emoji: '🛕', duration: '1-2h', tag: '必打卡,经典',  address: '厦门市思明区思明南路515号 · 厦门大学旁，公交1/21/45路厦大站' },
+      { name: '环岛路（曾厝垵→黄厝海滩）',  emoji: '🏖️', duration: '半天', tag: '必打卡,休闲',  address: '厦门市思明区环岛南路 · 市区东南海岸，公交29/47/751路曾厝垵站' },
+      { name: '中山路步行街',               emoji: '🛍️', duration: '2h',   tag: '必打卡,经典',  address: '厦门市思明区中山路 · 市中心老城区，地铁1号线镇海路站A出口300米' },
+      { name: '沙坡尾·艺术西区',            emoji: '📸', duration: '2h',   tag: '必打卡,网红',  address: '厦门市思明区沙坡尾 · 厦门大学南侧避风坞，公交71路沙坡尾站' },
+    ],
+    addons: [
+      { name: '胡里山炮台',                 emoji: '🏰', duration: '1h',   tag: '历史',         address: '厦门市思明区曾厝垵路2号 · 环岛南路海岸，公交22/86路胡里山炮台站' },
+      { name: '集美学村',                   emoji: '🏫', duration: '2h',   tag: '文艺',         address: '厦门市集美区嘉庚路 · 岛外，地铁1号线集美学村站' },
+      { name: '八市（第八海鲜市场）',        emoji: '🦐', duration: '1-2h', tag: '美食,体验',    address: '厦门市思明区开禾路 · 市中心西南，地铁1号线开禾路口站BRT旁' },
+      { name: '曾厝垵',                     emoji: '🍽️', duration: '2h',   tag: '美食,住宿',    address: '厦门市思明区滨海街道曾厝垵社 · 环岛南路，公交29/47/751路' },
+      { name: '园博苑',                     emoji: '🌸', duration: '半天', tag: '自然,文艺',    address: '厦门市集美区杏林湾路 · 岛外，地铁1号线园博苑站' },
+      { name: '云水谣土楼（一日游）',        emoji: '🏚️', duration: '全天', tag: '人文,经典',    address: '漳州市南靖县云水谣古镇 · 距厦门市中心约160km，大巴2.5h' },
+      { name: '火山岛（一日游）',           emoji: '🌋', duration: '全天', tag: '自然,网红',    address: '漳州市漳浦县前亭镇江口村 · 距厦门市中心约80km，自驾/大巴1.5h' },
+      { name: '钟鼓索道（俯瞰鼓浪屿）',      emoji: '🚡', duration: '1h',   tag: '观景',         address: '厦门市思明区虎园路31号 · 市中心万石植物园旁，地铁1号线中山公园站' },
+    ],
+    foodStyle: [
+      { name: '鼓浪屿龙头路小吃街',         emoji: '🦪', duration: '2h',   tag: '美食',         address: '厦门市思明区鼓浪屿龙头路 · 鼓浪屿岛上，码头下船步行50米' },
+    ],
+  },
+  '长沙': {
+    classic: [
+      { name: '橘子洲头（青年毛泽东雕像）',  emoji: '🏝️', duration: '半天', tag: '必打卡,地标',  address: '长沙市岳麓区橘子洲头 · 湘江西岸江心，地铁2号线橘子洲站2出口' },
+      { name: '岳麓山·岳麓书院·爱晚亭',     emoji: '🏔️', duration: '半天', tag: '必打卡,经典',  address: '长沙市岳麓区麓山路82号 · 湘江西岸，地铁2号线溁湾镇站3出口' },
+      { name: '五一广场（IFS国金中心）',     emoji: '🛍️', duration: '2-3h', tag: '必打卡,网红',  address: '长沙市芙蓉区五一大道 · 市中心核心商圈，地铁1/2号线五一广场站' },
+      { name: '湖南省博物馆',               emoji: '🏛️', duration: '2-3h', tag: '必打卡,文化',  address: '长沙市开福区东风路50号 · 市中心北，地铁6号线湘雅医院站1出口' },
+      { name: '太平老街',                   emoji: '🏮', duration: '2h',   tag: '必打卡,美食',  address: '长沙市天心区太平街 · 市中心五一广场西南侧，地铁2号线湘江中路站1A出口' },
+      { name: '黄兴路步行街',               emoji: '🛍️', duration: '2h',   tag: '必打卡,购物',  address: '长沙市天心区黄兴南路 · 市中心五一广场南侧，地铁1号线黄兴广场站' },
+    ],
+    addons: [
+      { name: '世界之窗',                   emoji: '🎡', duration: '半天', tag: '亲子',         address: '长沙市开福区三一大道485号 · 市区东北，地铁5号线马栏山站转公交' },
+      { name: '湖南大学',                   emoji: '📚', duration: '1-2h', tag: '文艺',         address: '长沙市岳麓区麓山南路 · 岳麓山脚下，地铁4号线湖南大学站' },
+      { name: '谢子龙影像艺术馆',           emoji: '📸', duration: '1-2h', tag: '网红,文艺',    address: '长沙市岳麓区潇湘南路387号 · 湘江西岸洋湖，地铁3号线洋湖湿地站' },
+      { name: '梅溪湖国际文化艺术中心',      emoji: '🎭', duration: '1-2h', tag: '网红',         address: '长沙市岳麓区梅溪湖路 · 市区西，地铁2号线梅溪湖西站' },
+      { name: '长沙世界之窗',               emoji: '🎢', duration: '半天', tag: '亲子',         address: '长沙市开福区三一大道485号 · 市区东北，地铁3/5号线月湖公园北站' },
+      { name: '石燕湖',                     emoji: '🌊', duration: '半天', tag: '自然',         address: '长沙市雨花区跳马镇石燕湖 · 市区南近郊，自驾/公交' },
+      { name: '铜官窑古镇',                 emoji: '🏘️', duration: '半天', tag: '人文',         address: '长沙市望城区铜官窑街道 · 市区北30km，地铁1号线丁字湾站转公交' },
+      { name: '杜甫江阁（湘江夜景）',        emoji: '🌃', duration: '1h',   tag: '夜景',         address: '长沙市天心区湘江中路 · 市中心湘江东岸，地铁1号线南门口站' },
+    ],
+    foodStyle: [
+      { name: '坡子街（火宫殿总店）',       emoji: '🌶️', duration: '2h',   tag: '美食,经典',    address: '长沙市天心区坡子街 · 市中心五一广场南侧，地铁1号线黄兴广场站1出口' },
+      { name: '扬帆夜市',                   emoji: '🍻', duration: '2h',   tag: '美食,夜市',    address: '长沙市芙蓉区万家丽中路 · 市区东，地铁2/5号线万家丽广场站' },
+    ],
+  },
+};
+/* 通用城市兜底模板（如果dest不在HOT_CITY_SPOTS映射中时使用） */
+const FALLBACK_SPOTS = [
+  { name: null,       emoji: '🏘️', duration: '2-3h', tag: '经典',  _tpl: '古城历史文化街区',    _addr_tpl: '老城区东大街 · 古城南门入口内50米' },
+  { name: null,       emoji: '🏛️', duration: '1-2h', tag: '地标',  _tpl: '市民广场（市中心地标）', _addr_tpl: '人民大道1号市民广场 · 地铁1号线市民广场站B出口' },
+  { name: null,       emoji: '🏺', duration: '2-3h', tag: '文化',  _tpl: '市博物馆',             _addr_tpl: '文化路88号（市博物馆新馆）· 公交6路博物馆站' },
+  { name: null,       emoji: '🌳', duration: '2h',   tag: '休闲',  _tpl: '中央公园',             _addr_tpl: '公园南路1号中央公园南门 · 全程免费开放' },
+  { name: null,       emoji: '🏔️', duration: '半天', tag: '自然',  _tpl: '西山国家森林公园',      _addr_tpl: '西郊风景区西山路201号 · 距市区约18km，打车30分钟' },
+  { name: null,       emoji: '📸', duration: '1-2h', tag: '网红',  _tpl: '创意文化产业园',        _addr_tpl: '建设路6号创意园3号楼 · 地铁2号线建设路站C出口' },
+  { name: null,       emoji: '🛕', duration: '1-2h', tag: '历史',  _tpl: '大慈寺（古刹）',        _addr_tpl: '古刹路1号大慈寺 · 老城区北侧山脚，公交3路可到' },
+  { name: null,       emoji: '🔭', duration: '1h',   tag: '观景',  _tpl: '城市之巅观景台',        _addr_tpl: 'CBD核心区环球金融中心88层观景台 · 需购票' },
+  { name: null,       emoji: '🛒', duration: '1-2h', tag: '体验',  _tpl: '老街综合市场',          _addr_tpl: '老城区南街120号综合市场 · 南门菜市场旁' },
+  { name: null,       emoji: '🎨', duration: '2h',   tag: '文艺',  _tpl: '艺术工厂文创园',        _addr_tpl: '城东北工业路99号旧工厂改造艺术区 · 公交11路文创园站' },
+  { name: null,       emoji: '🌊', duration: '1-2h', tag: '休闲',  _tpl: '东湖滨水步道',          _addr_tpl: '东湖东岸环湖路 · 东湖公园东门进入，全程免费' },
+  { name: null,       emoji: '🎡', duration: '半天', tag: '亲子',  _tpl: '欢乐世界主题乐园',      _addr_tpl: '近郊乐华路888号欢乐世界 · 城际快巴直达，往返1h' },
+  { name: null,       emoji: '🏚️', duration: '半天', tag: '人文',  _tpl: '青岩古镇',              _addr_tpl: '东郊32公里青岩古镇景区 · 城际公交直达游客中心' },
+  { name: null,       emoji: '🗼', duration: '1h',   tag: '夜景',  _tpl: '塔山广播电视塔',        _addr_tpl: '塔山路1号广播电视塔顶层 · 需购票登顶，夜景必去' },
+];
+
 function getAttractionsPool(dest, style) {
-  const base = [
-    { name: `${dest}古城历史文化街区`,   emoji: '🏘️', duration: '2-3h', tag: '经典', address: `${dest}市老城区东大街 · 古城南门入口内50米` },
-    { name: `${dest}市民广场（市中心地标）`, emoji: '🏛️', duration: '1-2h', tag: '地标', address: `${dest}市人民大道1号市民广场 · 地铁1号线市民广场站B出口` },
-    { name: `${dest}市博物馆`,           emoji: '🏺', duration: '2-3h', tag: '文化', address: `${dest}市文化路88号（市博物馆新馆）· 公交6路博物馆站` },
-    { name: `${dest}中央公园`,           emoji: '🌳', duration: '2h',   tag: '休闲', address: `${dest}市公园南路1号中央公园南门 · 全程免费开放` },
-    { name: `${dest}西山国家森林公园`,    emoji: '🏔️', duration: '半天', tag: '自然', address: `${dest}市西郊风景区西山路201号 · 距市区约18km，打车30分钟` },
-    { name: `${dest}创意文化产业园`,      emoji: '📸', duration: '1-2h', tag: '网红', address: `${dest}市建设路6号创意园3号楼 · 地铁2号线建设路站C出口` },
-    { name: `${dest}大慈寺（古刹）`,     emoji: '🛕', duration: '1-2h', tag: '历史', address: `${dest}市古刹路1号大慈寺 · 老城区北侧山脚，公交3路可到` },
-    { name: `${dest}城市之巅观景台`,      emoji: '🔭', duration: '1h',   tag: '观景', address: `${dest}市CBD核心区环球金融中心88层观景台 · 需购票` },
-    { name: `${dest}老街综合市场`,        emoji: '🛒', duration: '1-2h', tag: '体验', address: `${dest}市老城区南街120号综合市场 · 南门菜市场旁` },
-    { name: `${dest}艺术工厂文创园`,      emoji: '🎨', duration: '2h',   tag: '文艺', address: `${dest}市城东北工业路99号旧工厂改造艺术区 · 公交11路文创园站` },
-    { name: `${dest}东湖滨水步道`,        emoji: '🌊', duration: '1-2h', tag: '休闲', address: `${dest}市东湖东岸环湖路 · 东湖公园东门进入，全程免费` },
-    { name: `${dest}欢乐世界主题乐园`,    emoji: '🎡', duration: '半天', tag: '亲子', address: `${dest}市近郊乐华路888号欢乐世界 · 城际快巴直达，往返1h` },
-    { name: `${dest}青岩古镇`,           emoji: '🏚️', duration: '半天', tag: '人文', address: `${dest}市东郊32公里青岩古镇景区 · 城际公交直达游客中心` },
-    { name: `${dest}塔山广播电视塔`,      emoji: '🗼', duration: '1h',   tag: '夜景', address: `${dest}市塔山路1号广播电视塔顶层 · 需购票登顶，夜景必去` },
-  ];
+  const key = dest.trim().replace(/[市区省]/g, '');
+  const cityCfg = Object.keys(HOT_CITY_SPOTS).find(c => c.includes(key) || key.includes(c));
+  let base;
+  if (cityCfg && HOT_CITY_SPOTS[cityCfg]) {
+    // 命中热门城市：精确景点 + 补遗
+    const cfg = HOT_CITY_SPOTS[cityCfg];
+    base = (cfg.classic || []).concat(cfg.addons || []);
+    if (cfg.foodStyle && style === '美食之旅') {
+      base.splice(4, 0, ...cfg.foodStyle); // 第4位插入美食街
+    }
+    if (cfg.cultureStyle && style === '文化深度游') {
+      base.splice(5, 0, ...cfg.cultureStyle);
+    }
+  } else {
+    // 兜底：通用模板
+    base = FALLBACK_SPOTS.map(s => ({
+      name: `${dest}${s._tpl}`,
+      emoji: s.emoji,
+      duration: s.duration,
+      tag: s.tag,
+      address: `${dest}市${s._addr_tpl}`,
+    }));
+  }
+  // 风格通用补全（仅兜底或映射没配 foodStyle 时才加）
   if (style === '美食之旅') {
-    base.splice(3, 0, { name: `${dest}老字号小吃街`, emoji: '🍜', duration: '2h', tag: '美食', address: `${dest}市老城区三圣街美食街 · 地铁1号线老城区站A出口30米` });
-    base.push({ name: `${dest}滨江夜市一条街`, emoji: '🍻', duration: '2h', tag: '美食', address: `${dest}市滨江路滨河广场夜市 · 17:30开市，地铁4号线滨河路站` });
+    const alreadyHasFood = base.some(s => s.tag && s.tag.includes('美食') && /街|市|巷|夜宵/.test(s.name || ''));
+    if (!alreadyHasFood) {
+      base.splice(3, 0, { name: `${dest}老字号小吃街`, emoji: '🍜', duration: '2h', tag: '美食', address: `${dest}市老城区三圣街美食街 · 地铁1号线老城区站A出口30米` });
+      base.push({ name: `${dest}滨江夜市一条街`, emoji: '🍻', duration: '2h', tag: '美食', address: `${dest}市滨江路滨河广场夜市 · 17:30开市，地铁4号线滨河路站` });
+    }
   }
   if (style === '休闲度假') {
     base.splice(3, 0, { name: `${dest}海滨度假沙滩公园`, emoji: '🏖️', duration: '半天', tag: '度假', address: `${dest}市海滨大道中段101号沙滩公园 · 旅游专线直达` });
     base.push({ name: `${dest}温泉度假区`, emoji: '♨️', duration: '半天', tag: '度假', address: `${dest}市近郊汤泉路66号温泉度假村 · 自驾40分钟可达` });
   }
-  if (style === '文化深度游') {
+  if (style === '文化深度游' && !base.some(s => /书院|故居|纪念馆|民俗|非遗/.test(s.name || ''))) {
     base.splice(4, 0, { name: `${dest}书院（历史旧址）`, emoji: '📚', duration: '1-2h', tag: '文化', address: `${dest}市书院街27号 · 老城区文庙旁，公交5路可到` });
     base.push({ name: `${dest}名人故居纪念馆`, emoji: '🏛️', duration: '1-2h', tag: '人文', address: `${dest}市故居路12号纪念馆 · 需预约，免费开放` });
   }
