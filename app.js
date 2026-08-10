@@ -140,9 +140,15 @@ function bindEvents() {
   els.styles.addEventListener('click', (e) => {
     const btn = e.target.closest('.style-btn');
     if (!btn) return;
-    els.styles.querySelectorAll('.style-btn').forEach((b) => b.classList.remove('active'));
-    btn.classList.add('active');
-    state.style = btn.dataset.style;
+    const isActive = btn.classList.contains('active');
+    if (isActive) {
+      btn.classList.remove('active');
+      state.style = '';
+    } else {
+      els.styles.querySelectorAll('.style-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.style = btn.dataset.style;
+    }
   });
   if (els.slots) {
     els.slots.addEventListener('change', (e) => {
