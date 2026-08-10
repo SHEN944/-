@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>旅途手账 · AI 旅行攻略生成器</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div class="logo">
+        <span class="logo-icon">📔</span>
+        <span class="logo-text">旅途手账</span>
+      </div>
+      <div class="subtitle">AI 为你书写专属旅行攻略 · 数据来源：抖音 &amp; 小红书</div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-tag">🧭 开启你的下一段旅程</div>
+      <h1 class="hero-title">想去哪里？</h1>
+      <p class="hero-desc">
+        告诉我目的地和旅行时间，我会从<strong>抖音</strong>和<strong>小红书</strong>上搜集最新的攻略、酒店信息和美食推荐，为你规划一份详细的旅行方案。
+      </p>
+    </section>
+
+    <main class="card">
+      <div class="field">
+        <label class="field-label">
+          <span class="icon">📍</span>目的地
+        </label>
+        <input id="destination" type="text" class="input" placeholder="例如：京都、大理、巴黎、成都..." autocomplete="off" />
+      </div>
+
+      <div class="field">
+        <label class="field-label">
+          <span class="icon">📅</span>行程日期<span class="field-hint">选好出发与返程日期，自动算天数并联动酒店报价</span>
+        </label>
+        <div class="date-range-row">
+          <input id="startDate" type="date" class="input date-input" />
+          <span class="date-arrow">→</span>
+          <input id="endDate" type="date" class="input date-input" />
+          <span class="date-days">共 <span id="daysValue">3</span> 天</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">
+          <span class="icon">💰</span>酒店预算（每晚）
+        </label>
+        <div class="budget-row">
+          <span class="currency">¥</span>
+          <input id="budget" type="number" class="input budget-input" placeholder="不限" min="0" step="50" />
+          <span class="unit">元/晚</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">
+          <span class="icon">✨</span>旅行风格
+        </label>
+        <div id="styles" class="styles-grid">
+          <button class="style-btn active" data-style="经典观光">🏛️<span>经典观光</span></button>
+          <button class="style-btn" data-style="休闲度假">🏖️<span>休闲度假</span></button>
+          <button class="style-btn" data-style="探险户外">🏔️<span>探险户外</span></button>
+          <button class="style-btn" data-style="文化深度游">🎭<span>文化深度游</span></button>
+          <button class="style-btn" data-style="美食之旅">🍜<span>美食之旅</span></button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">
+          <span class="icon">⏰</span>行程时段<span class="field-hint">可多选，按你的作息自由组合</span>
+        </label>
+        <div id="slots" class="slots-grid">
+          <label class="slot-chip">
+            <input type="checkbox" name="slot" value="morning" checked />
+            <span class="slot-chip-body">🌅 上午</span>
+          </label>
+          <label class="slot-chip">
+            <input type="checkbox" name="slot" value="noon" checked />
+            <span class="slot-chip-body">🍽️ 中午</span>
+          </label>
+          <label class="slot-chip">
+            <input type="checkbox" name="slot" value="afternoon" checked />
+            <span class="slot-chip-body">🌇 下午</span>
+          </label>
+          <label class="slot-chip">
+            <input type="checkbox" name="slot" value="evening" checked />
+            <span class="slot-chip-body">🌙 晚上</span>
+          </label>
+          <span class="slots-hint"></span>
+        </div>
+      </div>
+
+      <div class="field search-toggle-row">
+        <div class="search-info">
+          <label class="field-label no-margin">
+            <span class="icon">🔍</span>搜索最新旅行资讯
+          </label>
+          <p class="search-desc">
+            自动搜索 <span class="badge douyin">抖音</span> 和
+            <span class="badge xhs">小红书</span> 上的最新旅行攻略、酒店信息和美食推荐
+          </p>
+        </div>
+        <label class="switch">
+          <input id="enableSearch" type="checkbox" checked />
+          <span class="slider-switch"></span>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="searchBtn" class="btn btn-secondary" disabled>🔎 搜索资讯预览</button>
+        <button id="generateBtn" class="btn btn-primary">生成我的旅行攻略 ✈️</button>
+      </div>
+    </main>
+
+    <section id="searchResults" class="card result-section hidden">
+      <h2 class="section-title">📡 来自抖音 &amp; 小红书的最新资讯</h2>
+      <div id="searchList" class="search-list"></div>
+    </section>
+
+    <section id="guideResult" class="card result-section hidden">
+      <h2 class="section-title">🎒 你的专属旅行攻略</h2>
+      <div id="guideContent" class="guide-content"></div>
+    </section>
+
+    <footer class="footer">
+      <p>每一段旅程都值得被认真规划</p>
+      <p class="footer-brand">旅途手账 · 让每一次出发都有准备</p>
+    </footer>
+  </div>
+
+  <div id="loading" class="loading hidden">
+    <div class="loading-box">
+      <div class="spinner"></div>
+      <p id="loadingText">正在从抖音 &amp; 小红书搜集最新资讯...</p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
