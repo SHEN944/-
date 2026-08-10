@@ -295,6 +295,1002 @@ html, body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ===== Field 提示 ===== */
+.field-hint {
+  margin-left: 8px;
+  font-size: 12px;
+  color: var(--text-mute);
+  font-weight: 400;
+}
+
+/* ===== 旅行风格按钮 ===== */
+.styles-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.style-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: 1.5px solid var(--card-border);
+  background: var(--bg-soft);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-soft);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  user-select: none;
+  outline: none;
+}
+.style-btn:hover {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  transform: translateY(-1px);
+}
+.style-btn.active {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(201, 101, 45, 0.28);
+}
+.style-btn.active:hover {
+  transform: translateY(-1px);
+}
+
+/* ===== 行程时段 ===== */
+.slots-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  position: relative;
+}
+.slot-chip {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+.slot-chip input { display: none; }
+.slot-chip-body {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 16px;
+  border: 1.5px solid var(--card-border);
+  background: var(--bg-soft);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-soft);
+  transition: all 0.18s ease;
+}
+.slot-chip:hover .slot-chip-body {
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+.slot-chip input:checked + .slot-chip-body {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+.slots-hint {
+  display: none;
+  font-size: 12px;
+  color: var(--primary);
+  font-weight: 500;
+}
+.slots-hint.show { display: inline-block; }
+
+/* ===== 搜索开关 ===== */
+.search-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.search-info { flex: 1; min-width: 0; }
+.search-desc {
+  font-size: 13px;
+  color: var(--text-soft);
+  margin-top: 4px;
+  line-height: 1.6;
+}
+.badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.badge.douyin { background: var(--douyin-bg); color: var(--douyin); }
+.badge.xhs { background: var(--xhs-bg); color: var(--xhs); }
+
+.switch {
+  position: relative;
+  width: 50px;
+  height: 28px;
+  flex-shrink: 0;
+}
+.switch input {
+  opacity: 0; width: 0; height: 0;
+}
+.slider-switch {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: #d9cfbe;
+  border-radius: 999px;
+  transition: all 0.2s;
+}
+.slider-switch::before {
+  content: "";
+  position: absolute;
+  height: 22px; width: 22px;
+  left: 3px; bottom: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: all 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.switch input:checked + .slider-switch {
+  background: var(--primary);
+}
+.switch input:checked + .slider-switch::before {
+  transform: translateX(22px);
+}
+
+/* ===== 操作按钮 ===== */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+.btn {
+  padding: 13px 22px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  outline: none;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(201, 101, 45, 0.3);
+}
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(201, 101, 45, 0.4);
+}
+.btn-secondary {
+  background: var(--bg-soft);
+  color: var(--primary-dark);
+  border: 1.5px solid var(--card-border);
+}
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  transform: translateY(-1px);
+}
+
+/* ===== 结果区域 ===== */
+.result-section {
+  animation: fadeInDown 0.3s ease;
+}
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1.5px dashed var(--card-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.search-fresh-badge {
+  font-size: 11px;
+  padding: 3px 10px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: help;
+}
+
+/* ===== 搜索结果列表 ===== */
+.search-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.search-item {
+  display: flex;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--card-border);
+  background: var(--section-bg);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.18s;
+  position: relative;
+}
+.search-item:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-hover);
+  background: #fff;
+}
+.search-item .source {
+  flex-shrink: 0;
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  color: #fff;
+}
+.search-item .source.douyin { background: var(--douyin); }
+.search-item .source.xhs { background: var(--xhs); }
+.search-item .item-body {
+  flex: 1; min-width: 0;
+}
+.search-item .item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.search-item .item-title {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.4;
+  flex: 1;
+}
+.item-jump-btn {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  font-size: 12px;
+  background: #fff;
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  color: var(--primary-dark);
+  text-decoration: none;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.item-jump-btn:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.search-item .item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-mute);
+  margin-bottom: 6px;
+}
+.fresh-badge {
+  padding: 1px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.fresh-hot { background: #ffebee; color: #c62828; }
+.fresh-new { background: #fff3e0; color: #e65100; }
+.fresh-year { background: #f1f8e9; color: #558b2f; }
+.search-item .item-snippet {
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.7;
+}
+.search-item .item-snippet.short {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.search-item .item-snippet.hidden { display: none; }
+.search-item .item-detail {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--card-border);
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.8;
+}
+.search-item .item-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.tag {
+  display: inline-block;
+  padding: 2px 10px;
+  background: var(--bg-soft);
+  color: var(--secondary);
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+.search-async-hint {
+  padding: 24px;
+  text-align: center;
+  background: var(--section-bg);
+  border-radius: var(--radius-sm);
+}
+.loader-spinner {
+  width: 32px; height: 32px;
+  border: 3px solid var(--card-border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  margin: 0 auto 12px;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ===== 攻略内容 ===== */
+.guide-content {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.guide-section {
+  padding: 20px;
+  background: var(--section-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+}
+.guide-section h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.guide-section ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.guide-section li {
+  padding-left: 18px;
+  position: relative;
+  font-size: 14px;
+  color: var(--text-soft);
+  line-height: 1.7;
+}
+.guide-section li::before {
+  content: "•";
+  position: absolute;
+  left: 4px;
+  color: var(--primary);
+  font-weight: 700;
+}
+.sec-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px; height: 28px;
+  background: var(--primary-light);
+  border-radius: 8px;
+  font-size: 15px;
+}
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* ===== 每日行程 ===== */
+.day-block {
+  padding: 16px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--card-border);
+  margin-bottom: 14px;
+}
+.day-block:last-child { margin-bottom: 0; }
+.day-block > p {
+  font-size: 14px;
+  color: var(--text);
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+  border-bottom: 1px dashed var(--card-border);
+}
+.day-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.slot-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+.slot-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 6px;
+}
+.slot-emoji-text {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--secondary);
+}
+.slot-time-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.slot-time-input {
+  width: 80px;
+  padding: 4px 8px;
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  background: var(--bg-soft);
+  font-size: 12px;
+  color: var(--text);
+  outline: none;
+  text-align: center;
+}
+.slot-time-input:focus {
+  border-color: var(--primary);
+  background: #fff;
+}
+.slot-time-arrow { color: var(--text-mute); font-size: 12px; }
+
+.slot-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ===== 景点卡片 ===== */
+.spot-card {
+  display: grid;
+  grid-template-columns: 90px 1fr 24px;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg-soft);
+  border: 1.5px solid transparent;
+  border-radius: 12px;
+  transition: all 0.18s;
+  position: relative;
+}
+.spot-card:hover {
+  border-color: var(--primary);
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+.spot-card.dragging {
+  opacity: 0.5;
+  transform: scale(0.98);
+}
+.spot-card.drag-over {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  transform: translateY(-2px);
+}
+.spot-card.swapped {
+  animation: swapFlash 0.6s ease;
+}
+@keyframes swapFlash {
+  0% { background: var(--accent); }
+  100% { background: var(--bg-soft); }
+}
+.spot-photo {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--card-border);
+  flex-shrink: 0;
+}
+.spot-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.spot-photo-emoji {
+  position: absolute;
+  bottom: 4px; left: 4px;
+  background: rgba(255,255,255,0.92);
+  border-radius: 6px;
+  padding: 1px 6px;
+  font-size: 14px;
+}
+.spot-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.spot-time-suggest {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary-dark);
+  background: var(--primary-light);
+  padding: 2px 8px;
+  border-radius: 6px;
+  align-self: flex-start;
+}
+.spot-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+}
+.spot-meta {
+  font-size: 12px;
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+.spot-map-links {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+.map-link {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 11px;
+  background: #fff;
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  color: var(--text-soft);
+  transition: all 0.15s;
+}
+.map-link:hover {
+  border-color: var(--primary);
+  color: var(--primary-dark);
+  background: var(--primary-light);
+}
+.spot-grip {
+  width: 24px;
+  align-self: center;
+  text-align: center;
+  font-size: 18px;
+  color: var(--text-mute);
+  cursor: grab;
+  padding: 20px 0;
+  line-height: 1;
+}
+.spot-grip:active { cursor: grabbing; }
+
+/* ===== 添加景点 ===== */
+.add-spot-btn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  background: #fff;
+  border: 1.5px dashed var(--card-border);
+  border-radius: 10px;
+  color: var(--primary-dark);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.add-spot-btn:hover {
+  border-color: var(--primary);
+  border-style: solid;
+  background: var(--primary-light);
+}
+.add-spot-btn.active {
+  border-color: var(--primary);
+  border-style: solid;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
+.add-spot-panel {
+  margin-top: 8px;
+  padding: 12px;
+  background: #fff;
+  border: 1.5px solid var(--primary);
+  border-radius: 10px;
+  animation: fadeInDown 0.2s ease;
+}
+.add-panel-tip {
+  font-size: 12px;
+  color: var(--text-soft);
+  margin-bottom: 10px;
+}
+.add-panel-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.add-panel-item:hover { background: var(--primary-light); }
+.add-item-emoji { font-size: 16px; }
+.add-item-name { flex: 1; font-weight: 600; font-size: 13px; color: var(--text); }
+.add-item-meta { font-size: 11px; color: var(--text-mute); }
+
+/* ===== 用餐占位 ===== */
+.meal-placeholder {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 12px;
+  padding: 12px;
+  background: linear-gradient(135deg, #fffaf0, #fff5e0);
+  border: 1px dashed var(--accent);
+  border-radius: 12px;
+}
+.meal-icon {
+  font-size: 24px;
+  text-align: center;
+  line-height: 1;
+}
+.meal-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+}
+.meal-duration {
+  font-weight: 400;
+  color: var(--text-mute);
+  font-size: 12px;
+  margin-left: 4px;
+}
+.meal-desc {
+  font-size: 12.5px;
+  color: var(--text-soft);
+  margin-top: 4px;
+  line-height: 1.6;
+}
+
+/* ===== 备选景点池 ===== */
+.pool-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.pool-spot {
+  grid-template-columns: 60px 1fr 20px;
+  padding: 10px;
+}
+.pool-spot .spot-photo {
+  width: 60px; height: 60px;
+}
+.pool-spot .spot-grip {
+  padding: 14px 0;
+  font-size: 14px;
+}
+.pool-grid.pool-drag-over {
+  background: var(--primary-light);
+  border-radius: 12px;
+  padding: 10px;
+  transition: all 0.18s;
+}
+
+/* ===== 酒店卡片 ===== */
+.hotel-card {
+  padding: 18px;
+  background: #fff;
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  margin-bottom: 16px;
+}
+.hotel-card:last-child { margin-bottom: 0; }
+.hotel-cover {
+  width: 100%;
+  max-height: 260px;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 14px;
+  background: var(--card-border);
+}
+.hotel-cover img {
+  width: 100%;
+  max-height: 260px;
+  object-fit: cover;
+  display: block;
+}
+.hotel-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hotel-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.hotel-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+.hotel-rating {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.rating-score {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--primary);
+}
+.rating-stars {
+  color: var(--accent);
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+.rating-count {
+  font-size: 12px;
+  color: var(--text-mute);
+}
+.hotel-location {
+  font-size: 13px;
+  color: var(--text-soft);
+}
+.hotel-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.hotel-tag {
+  padding: 3px 10px;
+  background: var(--bg-soft);
+  color: var(--secondary);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.hotel-desc {
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.7;
+}
+.hotel-facilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.facility {
+  padding: 3px 10px;
+  background: #fff;
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-soft);
+}
+.hotel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+.hotel-cta {
+  padding: 8px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+.hotel-cta.ctrip {
+  background: linear-gradient(135deg, #0f6cff, #0052d9);
+  color: #fff;
+}
+.hotel-cta.ctrip:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(15,108,255,0.3); }
+.hotel-cta.amap {
+  background: var(--bg-soft);
+  color: var(--primary-dark);
+  border: 1.5px solid var(--card-border);
+}
+.hotel-cta.amap:hover { border-color: var(--primary); background: var(--primary-light); transform: translateY(-1px); }
+
+.rooms-title {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--card-border);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.rooms-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+.room-card {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 14px;
+  padding: 12px;
+  background: var(--bg-soft);
+  border-radius: 12px;
+}
+.room-photo {
+  width: 140px; height: 100px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--card-border);
+  flex-shrink: 0;
+}
+.room-photo img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.room-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.room-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.room-name { font-weight: 700; font-size: 14px; color: var(--text); }
+.room-price-col {
+  text-align: right;
+  flex-shrink: 0;
+}
+.room-old-price {
+  font-size: 12px;
+  color: var(--text-mute);
+  text-decoration: line-through;
+}
+.room-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+}
+.price-unit { font-size: 13px; color: var(--primary-dark); font-weight: 600; }
+.price-num {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--primary);
+  margin: 0 1px;
+}
+.room-price-ref {
+  font-size: 11px;
+  color: var(--text-mute);
+}
+.room-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-soft);
+}
+.meta-item {}
+.meta-sep { color: var(--text-mute); }
+.room-amenities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.amenity {
+  padding: 2px 8px;
+  background: #fff;
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  font-size: 11.5px;
+  color: var(--text-soft);
+}
+.room-policies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+.policy {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+.policy-free { background: #e8f5e9; color: #2e7d32; }
+.policy-strict { background: #fff8e1; color: #e65100; }
+.policy-breakfast { background: #fce4ec; color: #ad1457; }
+
+/* ===== Loading ===== */
+.loading {
+  position: fixed;
+  inset: 0;
+  background: rgba(60, 49, 39, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; } to { opacity: 1; }
+}
+.loading-box {
+  background: #fff;
+  padding: 28px 36px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  min-width: 260px;
+}
+.spinner {
+  width: 44px; height: 44px;
+  border: 4px solid var(--card-border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  margin: 0 auto 14px;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+#loadingText {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ===== Footer ===== */
+.footer {
+  text-align: center;
+  padding: 30px 10px 10px;
+  color: var(--text-mute);
+  font-size: 13px;
+  line-height: 1.8;
+}
+.footer-brand {
+  margin-top: 4px;
+  font-weight: 600;
+  color: var(--secondary);
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 600px) {
   .page { padding: 16px 14px 40px; }
@@ -305,5 +1301,16 @@ html, body {
   .date-input { min-width: 0; }
   .date-arrow { display: none; }
   .date-days { align-self: flex-start; }
+  .search-toggle-row { flex-direction: column; align-items: stretch; }
+  .slot-row { grid-template-columns: 1fr; }
+  .slot-label { flex-direction: row; align-items: center; justify-content: space-between; padding-top: 0; }
+  .spot-card { grid-template-columns: 70px 1fr 22px; }
+  .spot-photo { width: 70px; height: 70px; }
   .pool-grid { grid-template-columns: 1fr; }
+  .room-card { grid-template-columns: 1fr; }
+  .room-photo { width: 100%; height: 160px; }
+  .hotel-title-row { flex-direction: column; align-items: stretch; }
+  .room-head { flex-direction: column; align-items: stretch; }
+  .room-price-col { text-align: left; }
+  .room-price { justify-content: flex-start; }
 }
